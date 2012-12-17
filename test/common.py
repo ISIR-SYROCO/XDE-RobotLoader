@@ -15,9 +15,85 @@ import math
 
 import time
 
+import clockTask
 import physic
 import graphic
 
+
+
+
+
+
+
+
+def createAllAgents(TIME_STEP):
+    print "CREATE CLOCK..."
+    import clockTask
+    clock = clockTask.createClock()
+
+
+    print "CREATE GRAPHIC..."
+    import graphic
+    graph = graphic.createTask()
+    scene_name = graphic.init()
+    graph.s.Connectors.IConnectorBody.new("icf", "body_state_H", scene_name)
+
+
+    print "CREATE PHYSIC..."
+    import physic
+    phy = physic.createTask()
+    physic.init(TIME_STEP)
+    phy.s.Connectors.OConnectorBodyStateList.new("ocb", "body_state")
+
+
+    print "CREATE PORTS..."
+    phy.addCreateInputPort("clock_trigger", "double")
+    icps = phy.s.Connectors.IConnectorSynchro.new("icps")
+    icps.addEvent("clock_trigger")
+    clock.getPort("ticks").connectTo(phy.getPort("clock_trigger"))
+
+    graph.getPort("body_state_H").connectTo(phy.getPort("body_state_H"))
+
+
+    return clock, phy, graph
+
+
+
+
+
+def delWorld(old_world):
+    
+    #delete graphical scene
+    def deleteNodeInGraphicalTree(node):
+        nname = str(node.name)
+        print 'treating', nname
+        if graphic.graph_scn.SceneInterface.nodeExists(nname):
+            graphic.graph_scn.SceneInterface.removeNode(nname)
+    desc.core.visitDepthFirst(deleteNodeInGraphicalTree, old_world.scene.graphical_scene.root_node)
+
+
+
+    #delete physical scene
+    for mechanism in old_world.scene.physical_scene.mechanisms:
+        mname = str(mechanism.name)
+        physic.phy.s.deleteComponent(mname)
+    
+    #scene = physic.phy.s.GVM.Scene("main")         #TODO: main ne devrait pas etre scpecifie
+    scene = physic.ms
+    def removeRigidBodyChildren(node):
+        print node.rigid_body.name
+        for child in node.children:
+            removeRigidBodyChildren(child)
+        
+        rbname = str(node.rigid_body.name)
+        scene.removeRigidBody(rbname)
+        physic.phy.s.deleteComponent(rbname)
+        physic.phy.s.deleteComponent(str(node.inner_joint.name))
+
+    for node in old_world.scene.physical_scene.nodes:
+        removeRigidBodyChildren(node)
+
+#    physic.phy.s.deleteComponent()
 
 
 def addWorld(new_world):
@@ -25,11 +101,10 @@ def addWorld(new_world):
     """
     phy, graph = physic.phy, graphic.graph
     
-    graph.s.stop()
+#    graph.s.stop()
     phy.s.stop()
     old_T = phy.s.getPeriod()
     phy.s.setPeriod(0)
-
 
     physic.deserializeWorld(new_world)
     graphic.deserializeWorld(new_world)
@@ -42,33 +117,11 @@ def addWorld(new_world):
 
     phy.s.setPeriod(old_T)
     phy.s.start()
-    graph.s.start()
-
-
-
-#def removeWorld(old_world):
-#    """
-#    """
-#    phy, graph = physic.phy, graphic.graph
-#    
-#    graph.s.stop()
-#    phy.s.stop()
-#    old_T = phy.s.getPeriod()
-#    phy.s.setPeriod(0)
-
-
-#    physic.deserializeWorld(new_world)
-#    graphic.deserializeWorld(new_world)
-
-
-#    ocb = phy.s.Connectors.OConnectorBodyStateList("ocb")
-#    for b in new_world.scene.rigid_body_bindings:
-#        if len(b.graph_node) and len(b.rigid_body):
-#            ocb.addBody(str(b.rigid_body))
-
-#    phy.s.setPeriod(old_T)
-#    phy.s.start()
 #    graph.s.start()
+
+
+
+
 
 
 
@@ -190,13 +243,18 @@ def createWorldFromUrdfFile(urdfFileName, robotName):
 #                                            append_label_library = '',
 #                                            append_label_nodes = robotName,
 #                                            append_label_graph_meshes = robotName)
-    urdfWorld = desc.scene.createWorld()
+    urdfWorld = desc.scene.createWorld(name=robotName+"root")
 
-    kin_tree = parse_urdf(urdfFileName)
+    urdfRobot, urdfNodes = parse_urdf(urdfFileName, robotName)
+    kin_tree = urdfNodes[robotName+urdfRobot.get_root()]
+    
+    print kin_tree
+    
     is_fixed_base = True #TODO: must be set
     H_init = lgsm.Displacementd()
     
     root = desc.robot.addKinematicTree(urdfWorld.scene.physical_scene, parent_node=None, tree=kin_tree, fixed_base=is_fixed_base, H_init=H_init)
+
 
     root_node = urdfWorld.scene.graphical_scene.root_node
     children_nodes = root_node.children                     #TODO: if structure is not a comb, but a tree
@@ -207,6 +265,10 @@ def createWorldFromUrdfFile(urdfFileName, robotName):
         node.position.extend(H.tolist())
     map(lambda node: setNodePosition(node, lgsm.Displacementd()), children_nodes)
     
+    urdf_bodies   = [robotName+v for v in  urdfRobot.links.keys()]
+    urdf_segments = urdf_bodies
+    desc.physic.addMechanism(urdfWorld.scene.physical_scene, robotName, robotName+urdfRobot.get_root(), [], urdf_bodies, urdf_segments)
+    
     return urdfWorld
 
 
@@ -214,7 +276,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName):
 
 
 
-def parse_urdf(urdfFileName):
+def parse_urdf(urdfFileName, robotName):
     """
     """
     from urdf import URDF
@@ -249,9 +311,9 @@ def parse_urdf(urdfFileName):
             rotation = j.origin.rotation
             H_parent_body = lgsm.Displacement(lgsm.vectord(*position) , RollPitchYaw2Quaternion(*rotation))
 
-            nodes[l_name] = [l_name, mass, H_parent_body, [], []]
+            nodes[robotName+l_name] = [robotName+l_name, mass, H_parent_body, [], []]
         else:
-            nodes[l_name] = [l_name, mass, lgsm.Displacementd(), [], []]
+            nodes[robotName+l_name] = [robotName+l_name, mass, lgsm.Displacementd(), [], []]
 
 
     urdf_joint_type_to_xde = {"revolute": "hinge",
@@ -270,12 +332,12 @@ def parse_urdf(urdfFileName):
         qinit = 0 #TODO: no mean to give init value of q
         
         if j.joint_type in ["revolute"]: #TODO: to complete
-            nodes[c_name][3].append(  (urdf_joint_type_to_xde[j.joint_type], V_p_joint, joint_axis_in_p, joint_damping, qmin, qmax, qinit)   )
-            nodes[p_name][4].append(nodes[c_name])
+            nodes[robotName+c_name][3].append(  (urdf_joint_type_to_xde[j.joint_type], V_p_joint, joint_axis_in_p, joint_damping, qmin, qmax, qinit)   )
+            nodes[robotName+p_name][4].append(nodes[robotName+c_name])
         else:
             raise ValueError
     
-    return nodes[robot.get_root()]
+    return robot, nodes #, nodes[robot.get_root()]  #[robot.get_root()]
 
 
 

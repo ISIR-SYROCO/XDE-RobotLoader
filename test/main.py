@@ -28,38 +28,15 @@ TIME_STEP = .01
 
 
 print "CREATE WORLD..."
-import scene
-world = scene.buildWorld()
+#import scene
+#world = scene.buildWorld()
 
 
-print "CREATE CLOCK..."
-import clockTask
-clock = clockTask.createClock()
+import common
+clock, phy, graph = common.createAllAgents(TIME_STEP)
 
+#common.addWorld(world)
 
-print "CREATE GRAPHIC..."
-import graphic
-graph = graphic.createTask()
-scene_name = graphic.init()
-graphic.deserializeWorld(world)
-graph.s.Connectors.IConnectorBody.new("icf", "body_state_H", scene_name)
-
-
-print "CREATE PHYSIC..."
-import physic
-phy = physic.createTask()
-physic.init(TIME_STEP)
-physic.deserializeWorld(world)
-phy.s.Connectors.OConnectorBodyStateList.new("ocb", "body_state")
-
-
-print "CREATE PORTS..."
-phy.addCreateInputPort("clock_trigger", "double")
-icps = phy.s.Connectors.IConnectorSynchro.new("icps")
-icps.addEvent("clock_trigger")
-clock.getPort("ticks").connectTo(phy.getPort("clock_trigger"))
-
-graph.getPort("body_state_H").connectTo(phy.getPort("body_state_H"))
 
 
 #######################################################################################################
@@ -72,7 +49,7 @@ graph.s.start()
 phy.s.start()
 clock.s.start()
 
-import common
+
 #k1world = common.createKukaWorld("k1")
 #k2world = common.createKukaWorld("k2", [1,1,0])
 #common.addWorld(k1world)
@@ -85,9 +62,26 @@ import common
 #k2dm = physicshelper.createDynamicModel(k2world, "k2")
 
 genWorld = common.createWorldFromUrdfFile("resources/urdf/kuka.xml", "k1")
+common.addWorld(genWorld)
 
-import time
-time.sleep(1)
+genWorld2 = common.createWorldFromUrdfFile("resources/urdf/kuka.xml", "k2")
+common.addWorld(genWorld2)
+
+#common.delWorld(genWorld)
+
+
+#k1 = phy.s.GVM.Robot("k1")
+#k2 = phy.s.GVM.Robot("k2")
+s  = phy.s.GVM.Scene("main")
+
+
+#common.addWorld(genWorld)
+
+#k1.removeRobot("k1")
+#k2.removeRobot("k2")
+
+#import time
+#time.sleep(1)
 
 #phy.s.GVM.Robot("k1").removeRobot("k1")
 
