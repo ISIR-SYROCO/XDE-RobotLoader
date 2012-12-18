@@ -15,6 +15,9 @@ import inspect
 cpath = os.path.dirname(os.path.abspath(inspect.getfile( inspect.currentframe()))) + "/"
 sys.path.append(cpath)
 
+#TODO: to delete
+import numpy
+numpy.set_printoptions(precision=6, suppress=True)
 
 
 ###################
@@ -27,15 +30,8 @@ print "BEGIN OF SCRIPT..."
 TIME_STEP = .01
 
 
-print "CREATE WORLD..."
-#import scene
-#world = scene.buildWorld()
-
-
 import common
 clock, phy, graph = common.createAllAgents(TIME_STEP)
-
-#common.addWorld(world)
 
 
 
@@ -50,40 +46,59 @@ phy.s.start()
 clock.s.start()
 
 
-#k1world = common.createKukaWorld("k1")
+k1world = common.createKukaWorld("k1")
 #k2world = common.createKukaWorld("k2", [1,1,0])
-#common.addWorld(k1world)
-#common.addWorld(k2world)
+genWorld = common.createWorldFromUrdfFile("resources/urdf/kuka_without_inertia.xml", "k1g", [.5,0,0, 0, 0, 0, 1], 0.5)
 
-#k1robot = phy.s.GVM.Robot("k1")
-#k2robot = phy.s.GVM.Robot("k2")
+genWorld2 = common.createWorldFromUrdfFile("resources/urdf/kuka2.xml", "k2g", [1,0,0, 0, 0, 0, 1], 0.5)
+
+
+common.addWorld(k1world)
+k1 = phy.s.GVM.Robot("k1")
+
+common.addWorld(genWorld)
+k1gen = phy.s.GVM.Robot("k1g")
+import numpy as np
+initPos = - np.array([[-45, -60, 60, 45, 0,90,90]]).T *np.pi/180.
+k1gen.setJointPositions(initPos)
+
+common.addWorld(genWorld2)
+k2gen = phy.s.GVM.Robot("k2g")
+k2gen.setJointPositions(initPos)
+
+
 #import physicshelper
 #k1dm = physicshelper.createDynamicModel(k1world, "k1")
 #k2dm = physicshelper.createDynamicModel(k2world, "k2")
 
-genWorld = common.createWorldFromUrdfFile("resources/urdf/kuka.xml", "k1")
-common.addWorld(genWorld)
-
-genWorld2 = common.createWorldFromUrdfFile("resources/urdf/kuka.xml", "k2")
-common.addWorld(genWorld2)
-
-#common.delWorld(genWorld)
 
 
-#k1 = phy.s.GVM.Robot("k1")
-#k2 = phy.s.GVM.Robot("k2")
-s  = phy.s.GVM.Scene("main")
+
+#for b in phy.s.GVM.Scene("main").getBodyNames():
+for b in ["00", "01", "02", "03", "04", "05", "06", "07"]:
+    print "BODY:", b
+    k1rb = phy.s.GVM.RigidBody("k1"+b)
+    k1grb = phy.s.GVM.RigidBody("k1g"+b)
+#    k1grb = phy.s.GVM.RigidBody("k2g"+b)
+    k1Mb = k1rb.getMassMatrix()
+    k1gMb = k1grb.getMassMatrix()
+    
+#    print k1Mb - k1gMb
+    
+#    H_b_pf = k1rb.getPrincipalInertiaFrame()
+#    Mpf = common.transport(Mb, H_b_pf)
+#    
+##    print b
+#    print '<inertia ixx="{0}"  ixy="{1}"  ixz="{2}" iyy="{3}" iyz="{4}" izz="{5}" />'.format(Mpf[0,0], Mpf[0,1], Mpf[0,2], Mpf[1,1], Mpf[1,2], Mpf[2,2])
+#    print  k1rb.getPrincipalInertiaFrame().getRotation()
+#    print  k1grb.getPrincipalInertiaFrame().getRotation()
+#    print Q
+    
+#    rpy = common.Quaternion2RollPitchYaw(Q)
+#    print " {} {} {}".format(*rpy)
+#    print rb.getPrincipalMomentsOfInertia()
 
 
-#common.addWorld(genWorld)
-
-#k1.removeRobot("k1")
-#k2.removeRobot("k2")
-
-#import time
-#time.sleep(1)
-
-#phy.s.GVM.Robot("k1").removeRobot("k1")
 
 # a special version of IPython
 import dsimi.interactive

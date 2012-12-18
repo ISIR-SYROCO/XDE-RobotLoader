@@ -20,6 +20,7 @@ import physic
 import graphic
 
 
+import os
 
 
 
@@ -31,20 +32,17 @@ def createAllAgents(TIME_STEP):
     import clockTask
     clock = clockTask.createClock()
 
-
     print "CREATE GRAPHIC..."
     import graphic
     graph = graphic.createTask()
     scene_name = graphic.init()
     graph.s.Connectors.IConnectorBody.new("icf", "body_state_H", scene_name)
 
-
     print "CREATE PHYSIC..."
     import physic
     phy = physic.createTask()
     physic.init(TIME_STEP)
     phy.s.Connectors.OConnectorBodyStateList.new("ocb", "body_state")
-
 
     print "CREATE PORTS..."
     phy.addCreateInputPort("clock_trigger", "double")
@@ -54,7 +52,6 @@ def createAllAgents(TIME_STEP):
 
     graph.getPort("body_state_H").connectTo(phy.getPort("body_state_H"))
 
-
     return clock, phy, graph
 
 
@@ -63,6 +60,7 @@ def createAllAgents(TIME_STEP):
 
 def delWorld(old_world):
     
+    print "REMOVE WORLD..."
     #delete graphical scene
     def deleteNodeInGraphicalTree(node):
         nname = str(node.name)
@@ -93,74 +91,200 @@ def delWorld(old_world):
     for node in old_world.scene.physical_scene.nodes:
         removeRigidBodyChildren(node)
 
-#    physic.phy.s.deleteComponent()
+
 
 
 def addWorld(new_world):
     """
     """
-    phy, graph = physic.phy, graphic.graph
-    
-#    graph.s.stop()
+    phy = physic.phy
+    print "STOP PHYSIC..."
     phy.s.stop()
     old_T = phy.s.getPeriod()
     phy.s.setPeriod(0)
 
+    print "CREATE WORLD..."
     physic.deserializeWorld(new_world)
     graphic.deserializeWorld(new_world)
 
-
+    print "CREATE CONNECTION PHY/GRAPH..."
     ocb = phy.s.Connectors.OConnectorBodyStateList("ocb")
     for b in new_world.scene.rigid_body_bindings:
         if len(b.graph_node) and len(b.rigid_body):
             ocb.addBody(str(b.rigid_body))
 
+    print "RESTART PHYSIC..."
     phy.s.setPeriod(old_T)
     phy.s.start()
-#    graph.s.start()
 
 
 
 
 
+################################################################################
+def transport(M, H):
+    """Transport (express) the mass matrix into another frame.
+
+    :param M: the mass matrix expressed in the original frame (say, `a`)
+    :type M: (6,6)-shaped array
+    :param H: homogeneous matrix from the new frame (say `b`) to the
+              original one: `H_{ab}`
+    :type H: (4,4)-shaped array
+    :rtype: (6,6)-shaped array
+
+    **Example:**
+
+    >>> M_a = diag((3., 2., 4., 1., 1., 1.))
+    >>> H_ab = Hg.transl(1., 3., 0.)
+    >>> M_b = transport(M_a, H_ab)
+    >>> allclose(M_b, [[ 12.,  -3.,   0.,   0.,   0.,  -3.],
+    ...                [ -3.,   3.,   0.,   0.,   0.,   1.],
+    ...                [  0.,   0.,  14.,   3.,  -1.,   0.],
+    ...                [  0.,   0.,   3.,   1.,   0.,   0.],
+    ...                [  0.,   0.,  -1.,   0.,   1.,   0.],
+    ...                [ -3.,   1.,   0.,   0.,   0.,   1.]])
+    True
+    >>> ismassmatrix(M_b)
+    True
+    >>> from math import pi
+    >>> H_ab = Hg.rotx(pi/4)
+    >>> M_b = transport(M_a, H_ab)
+    >>> allclose(M_b, [[ 3.,  0.,  0.,  0.,  0.,  0.],
+    ...                [ 0.,  3.,  1.,  0.,  0.,  0.],
+    ...                [ 0.,  1.,  3.,  0.,  0.,  0.],
+    ...                [ 0.,  0.,  0.,  1.,  0.,  0.],
+    ...                [ 0.,  0.,  0.,  0.,  1.,  0.],
+    ...                [ 0.,  0.,  0.,  0.,  0.,  1.]])
+    True
+    >>> ismassmatrix(M_b)
+    True
+
+    """
+    Ad = H.adjoint()
+    return np.dot(Ad.T, np.dot(M, Ad))
 
 
 
+def principalframe(M):
+    """Find the principal frame of inertia of a mass matrix.
 
-RESOURCES_PATH = "resources/dae/"
+    :param M: mass matrix expressed in any frame (say `a`)
+    :type M: (6,6)-shaped array
+    :rtype: (4,4)-shaped array
 
-def createKukaWorld(robotName="kuka", H_init=None):
-    kukaworld = desc.scene.parseColladaFile(RESOURCES_PATH + "kuka_lwr.dae",
-                                            root_node_name=robotName+"_root",
-                                            append_label_library = '',
-                                            append_label_nodes = robotName,
-                                            append_label_graph_meshes = robotName)
+    Returns the homogeneous matrix `H_{am}` to the principal inertia
+    frame `m`
+
+    **Example:**
+
+    >>> M_a = diag((3.,2.,4.,1.,1.,1.))
+    >>> H_ab = Hg.transl(1., 3., 0.)
+    >>> M_b = transport(M_a, H_ab)
+    >>> H_ba = principalframe(M_b)
+    >>> dot(H_ab, H_ba)
+    array([[ 1.,  0.,  0.,  0.],
+           [ 0.,  1.,  0.,  0.],
+           [ 0.,  0.,  1.,  0.],
+           [ 0.,  0.,  0.,  1.]])
+
+    """
+    from numpy.linalg import eig, det
+    m = M[5, 5]
+    rx = M[0:3, 3:6]/m
+
+    position = [rx[2, 1], rx[0, 2], rx[1, 0]]
     
-    root_node = kukaworld.scene.graphical_scene.root_node
-    children_nodes = root_node.children
+    RSR = M[0:3, 0:3] + m*np.dot(rx, rx)
+    [S, R] = eig(RSR)
+    if det(R)<0.:
+        iI = np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0]])
+        R = np.dot(R, iI)
+        S = np.dot(iI, np.dot(S, iI))
     
-    daeToKin = {"kuka_base"+robotName: robotName+"_00",
-                "kuka_1"+robotName   : robotName+"_01",
-                "kuka_2"+robotName   : robotName+"_02",
-                "kuka_3"+robotName   : robotName+"_03",
-                "kuka_4"+robotName   : robotName+"_04",
-                "kuka_5"+robotName   : robotName+"_05",
-                "kuka_6"+robotName   : robotName+"_06",
-                "kuka_7"+robotName   : robotName+"_07"}
+    return lgsm.Displacement(  lgsm.vectord(*position)   , lgsm.Rotation3.fromMatrix(R)  )
 
 
-    def setNodePosition(node, H):
-        node.ClearField("position")
-        node.position.extend(H.tolist())
-    map(lambda node: setNodePosition(node, lgsm.Displacementd()), root_node.children)
 
-    desc.graphic.applyMaterialSet(root_node, material_set=["xde/YellowOpaqueAvatars", "xde/GreenOpaqueAvatars", "xde/RedOpaqueAvatars"])
 
+def vec2SkewMatrix(vec):
+    assert(len(vec) == 3)
+    skm = np.array([[0      ,-vec[2], vec[1]],
+                    [ vec[2], 0     ,-vec[0]],
+                    [-vec[1], vec[0], 0     ]])
+    return skm
+
+
+
+def RollPitchYaw2Quaternion(roll, pitch, yaw):
+    """ Give the Quaternion coresponding to the roll,pitch,yaw rotation
+    """
+    cph,sph = np.cos(roll), np.sin(roll)
+    cth,sth = np.cos(pitch), np.sin(pitch)
+    cps,sps = np.cos(yaw), np.sin(yaw)
+    R = [[cth*cps              , cth*sps              , -sth   ],
+         [sph*sth*cps - cph*sps, sph*sth*sps + cph*cps, cth*sph],
+         [cph*sth*cps + sph*sps, cph*sth*sps - sph*cps, cth*cph]]
+    return lgsm.Rotation3.fromMatrix(np.matrix(R))
+
+
+def Quaternion2RollPitchYaw(Q):
+    """
+    """
+    q0, q1, q2, q3 = Q
+    rpy = [np.arctan2(2*q2*q3 + 2*q0*q1, q3**2 - q2**2 - q1**2 + q0**2),
+           -np.arcsin(2*q1*q3 - 2*q0*q2),
+           np.arctan2(2*q1*q2 + 2*q0*q3, q1**2 + q0**2 - q3**2 - q2**2)]
+    return rpy
+
+
+
+
+def createBinding(world, graph_node_name, phy_name, comp_name):
+    """
+    """
+    graph_node      = desc.core.findInTree(world.scene.graphical_scene.root_node, graph_node_name)
+    graph_node.name = phy_name # it is suitable to have the same name for both graphics and physics.
+    desc.scene.addBinding(world, phy_name, phy_name, "", comp_name)
+
+
+def createComposite(world, graph_node_name, composite_name, offset):
+    """
+    """
+    graph_node = desc.core.findInTree(world.scene.graphical_scene.root_node, graph_node_name)
+    composite  = desc.collision.addCompositeMesh(world.scene.collision_scene, composite_name, offset=offset)
+    desc.collision.copyFromGraphicalTree(composite.root_node, graph_node)
+    composite.root_node.ClearField("position")
+    composite.root_node.position.extend([0,0,0,1,0,0,0])
+
+
+
+
+def printKinTree(ktree, prefix=""):
+    print prefix+ktree[0], ":", ktree[3][0:3] #, ktree[3]   #ktree[1]: just the mass
+    for subk in ktree[4]:
+        printKinTree(subk, prefix+"   ")
+
+
+
+
+def getDaeToKin(robotName):
+    return     {"kuka_base"+robotName: robotName+"00",
+                "kuka_1"+robotName   : robotName+"01",
+                "kuka_2"+robotName   : robotName+"02",
+                "kuka_3"+robotName   : robotName+"03",
+                "kuka_4"+robotName   : robotName+"04",
+                "kuka_5"+robotName   : robotName+"05",
+                "kuka_6"+robotName   : robotName+"06",
+                "kuka_7"+robotName   : robotName+"07"}
+
+
+def getKukaKinematicTree(robotName, daeToKin):
+    """
+    """
     kuka_mass = 1.5
     kuka_damping = .5 # TODO!!!!!! change to 1.0 in the original script
 
     H00 = lgsm.Displacementd(0.0, 0., 0.0, 0, 0., 0., 1.)
-#    H00 = lgsm.Displacementd(0.0, 0., 0.0, 1, 0., 0., 0)
     H01 = lgsm.Displacement(lgsm.vectord(0,0.,0)   , lgsm.Rotation3.fromMatrix(np.matrix([[1,0,0],[0,1,0],[0,0,1]])))
     H12 = lgsm.Displacement(lgsm.vectord(0,0.,0)   , lgsm.Rotation3.fromMatrix(np.matrix([[1,0,0],[0,1,0],[0,0,1]])))
     H23 = lgsm.Displacement(lgsm.vectord(0,0.,0.4) , lgsm.Rotation3.fromMatrix(np.matrix([[1,0,0],[0,1,0],[0,0,1]])))
@@ -187,8 +311,35 @@ def createKukaWorld(robotName="kuka", H_init=None):
        ])
       ])
      ])
+    return kinematic_tree
 
 
+
+RESOURCES_PATH = "resources/dae/"
+
+
+def createKukaWorld(robotName="kuka", H_init=None):
+    kukaworld = desc.scene.parseColladaFile(RESOURCES_PATH + "kuka_lwr.dae",
+                                            root_node_name=robotName+"_root",
+                                            append_label_library = '',
+                                            append_label_nodes = robotName,
+                                            append_label_graph_meshes = robotName)
+    
+    root_node = kukaworld.scene.graphical_scene.root_node
+    children_nodes = root_node.children
+
+
+    desc.graphic.applyMaterialSet(root_node, material_set=["xde/YellowOpaqueAvatars", "xde/GreenOpaqueAvatars", "xde/RedOpaqueAvatars"])
+
+    daeToKin = getDaeToKin(robotName)
+    kinematic_tree = getKukaKinematicTree(robotName, daeToKin)
+#    printKinTree(kinematic_tree)
+    
+    def setNodePosition(node, H):
+        node.ClearField("position")
+        node.position.extend(H.tolist())
+    map(lambda node: setNodePosition(node, lgsm.Displacementd()), root_node.children)
+    
     if H_init is None:
         H_init = lgsm.Displacementd()
     if isinstance(H_init, list) or isinstance(H_init, tuple):
@@ -199,34 +350,21 @@ def createKukaWorld(robotName="kuka", H_init=None):
         node.rigid_body.contact_material = "material.metal"
     desc.core.visitDepthFirst(setNodeMaterial, root)
 
+    # create composite for collision
     kuka_offset = 0.004
-
-    def createKukaComposite(node_name, composite_name):
-        graph_node = desc.core.findInTree(kukaworld.scene.graphical_scene.root_node, node_name)
-        composite = desc.collision.addCompositeMesh(kukaworld.scene.collision_scene, composite_name, offset=kuka_offset)
-        desc.collision.copyFromGraphicalTree(composite.root_node, graph_node)
-        composite.root_node.ClearField("position")
-        composite.root_node.position.extend([0,0,0,1,0,0,0])
-
     for child in children_nodes:
-        createKukaComposite(child.name, daeToKin[child.name]+".comp")
+        createComposite(kukaworld, child.name, daeToKin[child.name]+".comp", kuka_offset)
 
 
     # association between physics, graphics and collision
-
-    def createKukaBinding(node_name, body_name, comp_name):
-        graph_node = desc.core.findInTree(kukaworld.scene.graphical_scene.root_node, node_name)
-        graph_node.name = body_name # it is suitable to have the same name for both graphics and physics.
-        desc.scene.addBinding(kukaworld, body_name, body_name, "", comp_name)
-
     for child in children_nodes:
-        createKukaBinding(child.name, daeToKin[child.name], daeToKin[child.name]+".comp")
+        createBinding(kukaworld, child.name, daeToKin[child.name], daeToKin[child.name]+".comp")
 
 
     kuka_segments = daeToKin.values()
     kuka_bodies = kuka_segments
     desc.physic.addMechanism(kukaworld.scene.physical_scene, robotName, daeToKin["kuka_base"+robotName], [], kuka_bodies, kuka_segments)
-    
+
     return kukaworld
 
 
@@ -235,40 +373,104 @@ def createKukaWorld(robotName="kuka", H_init=None):
 
 
 
-def createWorldFromUrdfFile(urdfFileName, robotName):
+def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, minimal_damping=0.001):
     """
     """
-#    kukaworld = desc.scene.parseColladaFile(fileName,
-#                                            root_node_name=robotName+"_root",
-#                                            append_label_library = '',
-#                                            append_label_nodes = robotName,
-#                                            append_label_graph_meshes = robotName)
     urdfWorld = desc.scene.createWorld(name=robotName+"root")
-
-    urdfRobot, urdfNodes = parse_urdf(urdfFileName, robotName)
-    kin_tree = urdfNodes[robotName+urdfRobot.get_root()]
     
-    print kin_tree
-    
-    is_fixed_base = True #TODO: must be set
-    H_init = lgsm.Displacementd()
-    
-    root = desc.robot.addKinematicTree(urdfWorld.scene.physical_scene, parent_node=None, tree=kin_tree, fixed_base=is_fixed_base, H_init=H_init)
-
-
     root_node = urdfWorld.scene.graphical_scene.root_node
     children_nodes = root_node.children                     #TODO: if structure is not a comb, but a tree
+    
+    urdfRobot, urdfNodes, urdfGraphNodes, urdfCollNodes = parse_urdf(urdfFileName, robotName, minimal_damping)
+    
+    print "GET GRAPHICAL TREE..."
+    binding_graph_phy = {}
+    for link_name, mesh_filename in urdfGraphNodes.items():
+        if mesh_filename is not None:
+            filename, sep, node_in_file = mesh_filename.partition("#")
+
+            tmp_world = desc.scene.parseColladaFile( str(os.path.dirname(urdfFileName)+"/"+filename ),
+                                                     append_label_library = '',
+                                                     append_label_nodes = robotName,
+                                                     append_label_graph_meshes = robotName )
+
+            if len(node_in_file) > 0:
+                desc.graphic.applyMaterialSet(tmp_world.scene.graphical_scene.root_node, material_set=["xde/YellowOpaqueAvatars", "xde/GreenOpaqueAvatars", "xde/RedOpaqueAvatars"]) #TODO: delete
+                desc.simple.graphic.addGraphicalTree(urdfWorld, tmp_world, node_in_file+robotName, src_node_name=node_in_file+robotName)
+            else:
+                pass # TODO: treat if the whole is the body (take the root)
+                
+            binding_graph_phy[node_in_file+robotName] = link_name
+            
+
+
+    kin_tree = urdfNodes[robotName+urdfRobot.get_root()]
+#    printKinTree(kin_tree)
 
 
     def setNodePosition(node, H):
         node.ClearField("position")
         node.position.extend(H.tolist())
-    map(lambda node: setNodePosition(node, lgsm.Displacementd()), children_nodes)
-    
-    urdf_bodies   = [robotName+v for v in  urdfRobot.links.keys()]
+    map(lambda node: setNodePosition(node, lgsm.Displacementd()), root_node.children)
+
+
+    is_fixed_base = True #TODO: must be set
+    if H_init is None:
+        H_init = lgsm.Displacementd()
+    if isinstance(H_init, list) or isinstance(H_init, tuple):
+        H_init=lgsm.Displacementd(*H_init)
+    root = desc.robot.addKinematicTree(urdfWorld.scene.physical_scene, parent_node=None, tree=kin_tree, fixed_base=is_fixed_base, H_init=H_init)
+
+
+    def setNodeMaterial(node):
+        node.rigid_body.contact_material = "material.metal"
+    desc.core.visitDepthFirst(setNodeMaterial, root)
+
+
+    for child in children_nodes:
+        createComposite(urdfWorld, child.name, binding_graph_phy[child.name]+".comp", 0.004) #TODO: no hardcoded value!!
+        
+
+    for child in children_nodes:
+        createBinding(urdfWorld, child.name, binding_graph_phy[child.name], "")
+
+
+    urdf_bodies   = [str(robotName+v) for v in  urdfRobot.links.keys()]
     urdf_segments = urdf_bodies
     desc.physic.addMechanism(urdfWorld.scene.physical_scene, robotName, robotName+urdfRobot.get_root(), [], urdf_bodies, urdf_segments)
-    
+
+
+
+    def setNodeMomentsOfInertia(node):
+        uname = node.rigid_body.name[len(robotName):]
+        link = urdfRobot.links[uname]
+        if hasattr(link.inertial.origin, "position"):
+            print "IIINNN", link.name
+            p   = link.inertial.origin.position
+            R   = RollPitchYaw2Quaternion(*link.inertial.origin.rotation)
+            m   = link.inertial.mass
+            Iud = link.inertial.matrix
+            Inertia =np.array([[Iud['ixx'], Iud['ixy'], Iud['ixz']],
+                               [Iud['ixy'], Iud['iyy'], Iud['iyz']],
+                               [Iud['ixz'], Iud['iyz'], Iud['izz']]])
+            Mc = np.zeros((6,6))
+            Mc[0:3, 0:3] = Inertia
+            Mc[3:6, 3:6] = m*np.eye(3)
+            
+            H_c_pf = principalframe(Mc)
+            Mpf    = transport(Mc, H_c_pf)
+            H_b_c  = lgsm.Displacementd(lgsm.vectord(p), R.inverse())
+            H_b_pf = H_b_c * H_c_pf
+            desc.physic.fillRigidBody(node.rigid_body,  mass=m, moments_of_inertia=[Mpf[0,0], Mpf[1,1], Mpf[2,2]], H_inertia_segment=H_b_c)
+        else:
+            compNode = desc.core.findInList(urdfWorld.scene.collision_scene.meshes, node.rigid_body.name+".comp")
+            desc.physic.computeInertiaParameters(node.rigid_body, urdfWorld.library, compNode)
+
+    desc.core.visitDepthFirst(setNodeMomentsOfInertia, root)
+
+
+
+
     return urdfWorld
 
 
@@ -276,68 +478,75 @@ def createWorldFromUrdfFile(urdfFileName, robotName):
 
 
 
-def parse_urdf(urdfFileName, robotName):
-    """
-    """
-    from urdf import URDF
-    robot = URDF.load_xml_file("resources/urdf/kuka.xml")
 
 
-    def RollPitchYaw2Quaternion(roll, pitch, yaw):
-        cph,sph = np.cos(roll), np.sin(roll)
-        cth,sth = np.cos(pitch), np.sin(pitch)
-        cps,sps = np.cos(yaw), np.sin(yaw)
-        R = [[cth*cps              , cth*sps              , -sth   ],
-             [sph*sth*cps - cph*sps, sph*sth*sps + cph*cps, cth*sph],
-             [cph*sth*cps + sph*sps, cph*sth*sps - sph*cps, cth*cph]]
-             
-        return lgsm.Rotation3.fromMatrix(np.matrix(R))
+
+
+
+
+
+
+
+
+def parse_urdf(urdfFileName, robotName, minimal_damping):
+    """
+    """
+    import urdf
+    robot = urdf.URDF.load_xml_file(urdfFileName)
 
 
     def get_joint_from_child_link(child_name):
-        for j_name, j in robot.joints.items():
-            if j.child == child_name:
-                return j
+        for j_name, joint in robot.joints.items():
+            if joint.child == child_name:
+                return joint
         return None # if not found
 
-    nodes = {}
+    phy_nodes   = {}
+    graph_nodes = {}
+    coll_nodes  = {}
 
     for l_name, link  in robot.links.items():
         #mass, inertias, H_parent_body = val
         mass = link.inertial.mass
-        j  = get_joint_from_child_link(l_name)
-        if j is not None:
-            position = j.origin.position
-            rotation = j.origin.rotation
+        j_from_child  = get_joint_from_child_link(l_name)
+        if j_from_child is not None:
+            position = j_from_child.origin.position
+            rotation = j_from_child.origin.rotation
             H_parent_body = lgsm.Displacement(lgsm.vectord(*position) , RollPitchYaw2Quaternion(*rotation))
 
-            nodes[robotName+l_name] = [robotName+l_name, mass, H_parent_body, [], []]
+            phy_nodes[robotName+l_name] = [robotName+l_name, mass, H_parent_body, [], []]
         else:
-            nodes[robotName+l_name] = [robotName+l_name, mass, lgsm.Displacementd(), [], []]
+            phy_nodes[robotName+l_name] = [robotName+l_name, mass, lgsm.Displacementd(), [], []]
+        
+        if isinstance(link.visual.geometry, urdf.Mesh):
+            graph_nodes[robotName+l_name] = link.visual.geometry.filename
+        else:
+            graph_nodes[robotName+l_name] = None #TODO: complete with other shapes, box, sphere, etc...
 
 
     urdf_joint_type_to_xde = {"revolute": "hinge",
                               } #TODO: to complete
+
     for j_name, joint in robot.joints.items():
-        p_name = joint.parent
-        c_name = joint.child
-#        V_p_joint =  lgsm.vectord(*j.origin.position)
-#        joint_axis_in_p = lgsm.vectord(*[float(v) for v in j.axis.split()])
-        V_p_joint =  j.origin.position
-        joint_axis_in_p = [float(v) for v in j.axis.split()] #PB with parser
-        qmin    = j.limits.lower
-        qmax    = j.limits.upper
-        tau_max = j.limits.effort
-        joint_damping = j.dynamics.damping if hasattr(j.dynamics, "damping") else 0
-        qinit = 0 #TODO: no mean to give init value of q
+        p_name     = joint.parent
+        c_name     = joint.child
+        V_p_joint  =  [0,0,0] #joint.origin.position
+        A_p_joint  = [float(v) for v in joint.axis.split()] #TODO:PB with parser
+        qmin       = joint.limits.lower
+        qmax       = joint.limits.upper
+        tau_max    = joint.limits.effort
+        joint_damp = joint.dynamics.damping if hasattr(joint.dynamics, "damping") else minimal_damping
+        qinit      = 0 #TODO: no mean to give init value of q
         
-        if j.joint_type in ["revolute"]: #TODO: to complete
-            nodes[robotName+c_name][3].append(  (urdf_joint_type_to_xde[j.joint_type], V_p_joint, joint_axis_in_p, joint_damping, qmin, qmax, qinit)   )
-            nodes[robotName+p_name][4].append(nodes[robotName+c_name])
+        
+        if joint.joint_type in ["revolute"]: #TODO: to complete
+            phy_nodes[robotName+c_name][3].append(  (urdf_joint_type_to_xde[joint.joint_type], V_p_joint, A_p_joint, joint_damp, qmin, qmax, qinit)   )
+            phy_nodes[robotName+p_name][4].append(phy_nodes[robotName+c_name])
         else:
             raise ValueError
-    
-    return robot, nodes #, nodes[robot.get_root()]  #[robot.get_root()]
+
+
+    return robot, phy_nodes, graph_nodes, coll_nodes
 
 
 
