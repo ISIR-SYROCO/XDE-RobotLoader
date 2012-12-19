@@ -60,37 +60,61 @@ def createAllAgents(TIME_STEP):
 
 def delWorld(old_world):
     
-    print "REMOVE WORLD..."
+    print "REMOVE CONNECTION PHY/GRAPH..."
+    ocb = physic.phy.s.Connectors.OConnectorBodyStateList("ocb")
+    for b in old_world.scene.rigid_body_bindings:
+        if len(b.graph_node) and len(b.rigid_body):
+            ocb.removeBody(str(b.rigid_body))
+
+
+    print "REMOVE GRAPHICAL WORLD..."
     #delete graphical scene
-    def deleteNodeInGraphicalTree(node):
+    def deleteNodeInGraphicalAgent(node):
+        for child in node.children:
+            deleteNodeInGraphicalAgent(child)
         nname = str(node.name)
-        print 'treating', nname
+        print 'deleting', nname
         if graphic.graph_scn.SceneInterface.nodeExists(nname):
             graphic.graph_scn.SceneInterface.removeNode(nname)
-    desc.core.visitDepthFirst(deleteNodeInGraphicalTree, old_world.scene.graphical_scene.root_node)
+
+    deleteNodeInGraphicalAgent(old_world.scene.graphical_scene.root_node)
 
 
-
+    print "REMOVE PHYSICAL WORLD..."
+    
+    phy = physic.phy
+    print "STOP PHYSIC..."
+    phy.s.stop()
+    old_T = phy.s.getPeriod()
+    phy.s.setPeriod(0)
+    
     #delete physical scene
     for mechanism in old_world.scene.physical_scene.mechanisms:
         mname = str(mechanism.name)
         physic.phy.s.deleteComponent(mname)
-    
-    #scene = physic.phy.s.GVM.Scene("main")         #TODO: main ne devrait pas etre scpecifie
+
     scene = physic.ms
     def removeRigidBodyChildren(node):
-        print node.rigid_body.name
         for child in node.children:
             removeRigidBodyChildren(child)
-        
+        print "deleting", node.rigid_body.name
         rbname = str(node.rigid_body.name)
-        scene.removeRigidBody(rbname)
-        physic.phy.s.deleteComponent(rbname)
-        physic.phy.s.deleteComponent(str(node.inner_joint.name))
+
+        if rbname in scene.getBodyNames(): #TODO: Body and rigidBody, the same???
+            scene.removeRigidBody(rbname)
+
+        for to_del in [rbname, str(rbname+".comp"), str(node.inner_joint.name)]:
+            if to_del in physic.phy.s.Components():
+                physic.phy.s.deleteComponent(to_del)
+
+
 
     for node in old_world.scene.physical_scene.nodes:
         removeRigidBodyChildren(node)
 
+    print "RESTART PHYSIC..."
+    phy.s.setPeriod(old_T)
+    phy.s.start()
 
 
 
