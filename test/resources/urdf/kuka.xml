@@ -13,7 +13,14 @@
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_base"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/kuka_lwr.dae#kuka_base"/>
+            </geometry>
+        </collision>
     </link>
     <link name="01">
         <inertial>
@@ -26,7 +33,14 @@
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_1"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/kuka_lwr.dae#kuka_1"/>
+            </geometry>
+        </collision>
     </link>
     <link name="02">
         <inertial>
@@ -39,7 +53,14 @@
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_2"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/kuka_lwr.dae#kuka_2"/>
+            </geometry>
+        </collision>
     </link>
     <link name="03">
         <inertial>
@@ -52,7 +73,14 @@
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_3"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/kuka_lwr.dae#kuka_3"/>
+            </geometry>
+        </collision>
     </link>
     <link name="04">
         <inertial>
@@ -65,7 +93,14 @@
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_4"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/kuka_lwr.dae#kuka_4"/>
+            </geometry>
+        </collision>
     </link>
     <link name="05">
         <inertial>
@@ -78,7 +113,14 @@
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_5"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/kuka_lwr.dae#kuka_5"/>
+            </geometry>
+        </collision>
     </link>
     <link name="06">
         <inertial>
@@ -91,7 +133,14 @@
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_6"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/kuka_lwr.dae#kuka_6"/>
+            </geometry>
+        </collision>
     </link>
     <link name="07">
         <inertial>
@@ -104,7 +153,14 @@
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_7"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/kuka_lwr.dae#kuka_7"/>
+            </geometry>
+        </collision>
     </link>
     
     
@@ -153,7 +209,7 @@
         <origin xyz="0 0 0" rpy="0 0 1.570796326795" />
         <parent link="05"/>
         <child link="06" />
-        <axis xyz="0 1 0" />
+        <axis xyz="1 0 0" />
         <limit lower="-5.57" upper="5.57" effort="1000" velocity="10" />
     </joint>
     

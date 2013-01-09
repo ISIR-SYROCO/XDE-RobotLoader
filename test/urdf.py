@@ -243,7 +243,7 @@ class Inertial(object):
                  mass=0.0, origin=None):
         self.matrix = {}
         self.matrix['ixx'] = ixx
-        self.matrix['ixy'] = iyy
+        self.matrix['ixy'] = ixy
         self.matrix['ixz'] = ixz
         self.matrix['iyy'] = iyy
         self.matrix['iyz'] = iyz
@@ -681,7 +681,7 @@ class URDF(object):
             elif node.localName == 'link':
                 urdf.add_link( Link.parse(node, verbose) )
             elif node.localName == 'material':
-                urdf.elements.append( Material.parse(node, verbose) )
+                urdf.add_material( Material.parse(node, verbose) )
             elif node.localName == 'gazebo':
                 None #Gazebo not implemented yet
             elif node.localName == 'transmission':
@@ -707,6 +707,10 @@ class URDF(object):
         """
         import rospy
         return URDF.parse_xml_string(rospy.get_param(key), verbose)
+
+    def add_material(self, material):
+        self.elements.append(material)
+        self.materials[material.name] = material
 
     def add_link(self, link):
         self.elements.append(link)
