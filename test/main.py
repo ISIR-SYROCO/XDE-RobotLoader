@@ -32,7 +32,7 @@ print "BEGIN OF SCRIPT..."
 TIME_STEP = .01
 
 
-import common
+from xde_robot_loader import common
 clock, phy, graph = common.createAllAgents(TIME_STEP)
 
 
