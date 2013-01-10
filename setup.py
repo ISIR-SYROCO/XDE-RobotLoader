@@ -29,6 +29,7 @@ class develop(Command):
 		self.py_version = (string.split(sys.version))[0]
 		prefix = get_config_vars('prefix')
 		self.config_vars = {'prefix': prefix,}
+		self.prefix = os.path.expanduser(self.prefix)
 
 	def run(self):
 		out_dir = os.path.join(self.prefix, "lib", "python"+self.py_version[0:3], "site-packages")
