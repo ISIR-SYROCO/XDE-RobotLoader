@@ -163,11 +163,9 @@ def addWorld(new_world, deserialize_graphic=True):
 
 
 
-def addMarkers(world, bodies_to_display=None):
+def addMarkers(world, bodies_to_display=None, thin_markers=True):
     """
     """
-    #TODO: problem. should investigate to add markers properly; now, there is warning messages
-    print "problem. should investigate to add markers properly; now, there is warning messages"
     allNodeNames = []
     def getNodeName(node):
         allNodeNames.append(node.rigid_body.name)
@@ -179,8 +177,31 @@ def addMarkers(world, bodies_to_display=None):
 
     ocb = physic.phy.s.Connectors.OConnectorBodyStateList("ocb")
     for body_name in bodies_to_display:
-        graphic.graph_scn.MarkersInterface.addMarker(str(body_name), False)
-        ocb.addBody(str(body_name))
+        if body_name not in graphic.graph_scn.MarkersInterface.getMarkerLabels():
+            graphic.graph_scn.MarkersInterface.addMarker(str(body_name), thin_markers)
+        else:
+            print "Warning: "+body_name+" marker already exists. Nothing to do."
+
+
+def delMarkers(world, bodies_to_hide=None):
+    """
+    """
+    allNodeNames = []
+    def getNodeName(node):
+        allNodeNames.append(node.rigid_body.name)
+
+    if bodies_to_hide is None:
+        for child in world.scene.physical_scene.nodes:
+            desc.core.visitDepthFirst(getNodeName, child)
+        bodies_to_hide = allNodeNames
+
+    ocb = physic.phy.s.Connectors.OConnectorBodyStateList("ocb")
+    for body_name in bodies_to_hide:
+        if body_name in graphic.graph_scn.MarkersInterface.getMarkerLabels():
+            graphic.graph_scn.MarkersInterface.removeMarker(str(body_name))
+        else:
+            print "Warning: "+body_name+" marker does not exist. Nothing to do."
+
 
 
 ################################################################################
@@ -318,30 +339,40 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
     #######################################################
     print "GET GRAPHICAL TREE..."
     binding_phy_graph = {}
-    for link_name, mesh_filename in urdfGraphNodes.items():
-        if mesh_filename is not None:
-            filename, sep, node_in_file = mesh_filename.partition("#")
+    #for link_name, mesh_filename in urdfGraphNodes.items():
+    for link_name in urdfRobot.links.keys():
+        robotLinkName = link_name+robotName
+        if robotLinkName in urdfGraphNodes:
+            mesh_filename = urdfGraphNodes[robotLinkName]
+            if mesh_filename is not None:
+                filename, sep, node_in_file = mesh_filename.partition("#")
 
-            tmp_world = desc.scene.parseColladaFile( str(os.path.dirname(urdfFileName)+"/"+filename ),
-                                                     append_label_library = robotName,
-                                                     append_label_nodes = robotName,
-                                                     append_label_graph_meshes = robotName )
+                tmp_world = desc.scene.parseColladaFile( str(os.path.dirname(urdfFileName)+"/"+filename ),
+                                                         append_label_library = robotName,
+                                                         append_label_nodes = robotName,
+                                                         append_label_graph_meshes = robotName )
 
-            if len(node_in_file) > 0:
-                if link_name in urdfMatNodes:
-                    mat = urdfWorld.library.materials.add()
-                    mat.name = link_name+"_material"
-                    desc.material.fillColorMaterial(mat, [ float(x) for x in urdfMatNodes[link_name] ])
-                    desc.graphic.applyMaterialSet(tmp_world.scene.graphical_scene.root_node, material_set=[mat.name])
+                if len(node_in_file) > 0:
+                    if robotLinkName in urdfMatNodes:
+                        mat = urdfWorld.library.materials.add()
+                        mat.name = robotLinkName+"_material"
+                        desc.material.fillColorMaterial(mat, [ float(x) for x in urdfMatNodes[robotLinkName] ])
+                        desc.graphic.applyMaterialSet(tmp_world.scene.graphical_scene.root_node, material_set=[mat.name])
+                    else:
+                        desc.graphic.applyMaterialSet(tmp_world.scene.graphical_scene.root_node, material_set=["xde/YellowOpaqueAvatars", "xde/GreenOpaqueAvatars", "xde/RedOpaqueAvatars"]) #TODO: delete
+                    desc.simple.graphic.addGraphicalTree(urdfWorld, tmp_world, node_in_file+robotName, src_node_name=node_in_file+robotName, ignore_library_conflicts=False)
                 else:
-                    desc.graphic.applyMaterialSet(tmp_world.scene.graphical_scene.root_node, material_set=["xde/YellowOpaqueAvatars", "xde/GreenOpaqueAvatars", "xde/RedOpaqueAvatars"]) #TODO: delete
-                desc.simple.graphic.addGraphicalTree(urdfWorld, tmp_world, node_in_file+robotName, src_node_name=node_in_file+robotName, ignore_library_conflicts=False)
-            else:
-                pass # TODO: treat if the whole file is the body (take the root)
-                
-            binding_phy_graph[link_name] = node_in_file+robotName
+                    pass # TODO: treat if the whole file is the body (take the root)
+                binding_phy_graph[robotLinkName] = node_in_file+robotName
+
+            else: #if mesh_filename is None, then it is sphere, cube, cyl
+                pass #TODO
         else:
-            binding_phy_graph[link_name] = ""
+            binding_phy_graph[robotLinkName] = robotLinkName
+            graph_node = desc.graphic.addGraphicalNode(urdfWorld.scene.graphical_scene, name=robotLinkName, parent_node=urdfWorld.scene.graphical_scene.root_node)
+            graph_node.position.extend([0,0,0,1,0,0,0])
+            graph_node.scale.extend([1,1,1])
+
 
 
     #######################################################
@@ -349,31 +380,39 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
     #######################################################
     print "GET COLLISION TREE..."
     binding_phy_coll = {}
-    for link_name, mesh_filename in urdfCollNodes.items():
-        if mesh_filename is not None:
-            filename, sep, node_in_file = mesh_filename.partition("#")
+    #for link_name, mesh_filename in urdfCollNodes.items():
+    for link_name in urdfRobot.links.keys():
+        robotLinkName = link_name+robotName
+        if robotLinkName in urdfCollNodes:
+            mesh_filename = urdfCollNodes[robotLinkName]
+            if mesh_filename is not None:
+                filename, sep, node_in_file = mesh_filename.partition("#")
 
-            tmp_world = desc.scene.parseColladaFile( str(os.path.dirname(urdfFileName)+"/"+filename ),
-                                                     append_label_library = robotName+'coll',
-                                                     append_label_nodes = robotName,
-                                                     append_label_graph_meshes = robotName )
-            if len(node_in_file) > 0:
-                composite_name = link_name+".comp"
-                createComposite(tmp_world, node_in_file+robotName, composite_name, composite_offset)
-                desc.simple.collision.addCompositeMesh(urdfWorld, tmp_world, composite_name, src_node_name=node_in_file+robotName, offset=composite_offset)
+                tmp_world = desc.scene.parseColladaFile( str(os.path.dirname(urdfFileName)+"/"+filename ),
+                                                         append_label_library = robotName+'coll',
+                                                         append_label_nodes = robotName,
+                                                         append_label_graph_meshes = robotName )
+                if len(node_in_file) > 0:
+                    composite_name = robotLinkName+".comp"
+                    createComposite(tmp_world, node_in_file+robotName, composite_name, composite_offset)
+                    desc.simple.collision.addCompositeMesh(urdfWorld, tmp_world, composite_name, src_node_name=node_in_file+robotName, offset=composite_offset)
+                else:
+                    pass # TODO: treat if the whole is the body (take the root)
+
+                binding_phy_coll[robotLinkName] = composite_name
             else:
-                pass # TODO: treat if the whole is the body (take the root)
-
-            binding_phy_coll[link_name] = composite_name
+                binding_phy_coll[robotLinkName] = ""
         else:
-            binding_phy_coll[link_name] = ""
+            binding_phy_coll[robotLinkName] = ""
 
 
     ###################
     # Create bindings #
     ###################
-    for link_name in urdfGraphNodes:
-        createBinding(urdfWorld, link_name, binding_phy_graph[link_name], binding_phy_coll[link_name]) #TODO: put bindings with real collision name.
+    #for link_name in urdfGraphNodes:
+    for link_name in urdfRobot.links.keys():
+        robotLinkName = link_name+robotName
+        createBinding(urdfWorld, robotLinkName, binding_phy_graph[robotLinkName], binding_phy_coll[robotLinkName]) #TODO: put bindings with real collision name.
 
 
     ######################################################################################
