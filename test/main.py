@@ -71,6 +71,10 @@ kuka2 = phy.s.GVM.Robot("k2g")
 kuka2.lockJoints()
 
 
+rx90World = common.createWorldFromUrdfFile("resources/urdf/rx90.xml", "rx90", [-0.5,0,0, 1, 0, 0, 0], True, 0.5, 0.01)
+common.addWorld(rx90World)
+rx90 = phy.s.GVM.Robot("rx90")
+
 
 #common.addMarkers(genWorld)
 

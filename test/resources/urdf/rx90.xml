@@ -9,9 +9,16 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="../dae/kuka_lwr.dae#kuka_base"/>
+                <mesh filename="../dae/rx90.dae#Basis"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/rx90.dae#Basis"/>
+            </geometry>
+        </collision>
     </link>
     <link name="01">
         <inertial>
@@ -20,9 +27,16 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="../dae/kuka_lwr.dae#kuka_1"/>
+                <mesh filename="../dae/rx90.dae#Shoulder"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/rx90.dae#Shoulder"/>
+            </geometry>
+        </collision>
     </link>
     <link name="02">
         <inertial>
@@ -31,9 +45,16 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="../dae/kuka_lwr.dae#kuka_2"/>
+                <mesh filename="../dae/rx90.dae#Arm"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/rx90.dae#Arm"/>
+            </geometry>
+        </collision>
     </link>
     <link name="03">
         <inertial>
@@ -42,9 +63,16 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="../dae/kuka_lwr.dae#kuka_3"/>
+                <mesh filename="../dae/rx90.dae#Elbow"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/rx90.dae#Elbow"/>
+            </geometry>
+        </collision>
     </link>
     <link name="04">
         <inertial>
@@ -53,9 +81,16 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="../dae/kuka_lwr.dae#kuka_4"/>
+                <mesh filename="../dae/rx90.dae#Forearm"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/rx90.dae#Forearm"/>
+            </geometry>
+        </collision>
     </link>
     <link name="05">
         <inertial>
@@ -64,87 +99,70 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="../dae/kuka_lwr.dae#kuka_5"/>
+                <mesh filename="../dae/rx90.dae#Hand"/>
             </geometry>
+            <material name="material.metal" />
         </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/rx90.dae#Hand"/>
+            </geometry>
+        </collision>
     </link>
     <link name="06">
         <inertial>
-            <mass value="0.75"/>
+            <mass value="1.5"/>
         </inertial>
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <mesh filename="../dae/kuka_lwr.dae#kuka_6"/>
-            </geometry>
-        </visual>
     </link>
-    <link name="07">
-        <inertial>
-            <mass value="0.075"/>
-        </inertial>
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <mesh filename="../dae/kuka_lwr.dae#kuka_7"/>
-            </geometry>
-        </visual>
-    </link>
-    
-    
-    
+
+
+
+
     <joint name="shoulder_0" type="revolute">
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0  0  0.42" rpy="0  0  0" />
         <parent link="00"/>
         <child link="01" />
-        <axis xyz="0 0 1" />
+        <axis xyz="0  0  1" />
         <limit lower="-10" upper="10" effort="1000" velocity="10" />
     </joint>
     
     <joint name="shoulder_1" type="revolute">
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0  0  0" rpy="1.5707963267948966  0  0" />
         <parent link="01"/>
         <child link="02" />
-        <axis xyz="0 1 0" />
+        <axis xyz="0  0  1" />
         <limit lower="-10" upper="10" effort="1000" velocity="10" />
     </joint>
     
     <joint name="shoulder_2" type="revolute">
-        <origin xyz="0 0 0.4" rpy="0 0 0" />
+        <origin xyz="0  -0.45  0.049" rpy="-1.5707963267948966  0  -3.1415926535897931" />
         <parent link="02"/>
         <child link="03" />
-        <axis xyz="0 0 1" />
+        <axis xyz="0  -1  0" />
         <limit lower="-10" upper="10" effort="1000" velocity="10" />
     </joint>
     
     <joint name="Elbow_0" type="revolute">
-        <origin xyz="0 0 0" rpy="0 0 3.14159265359" />
+        <origin xyz="0  0  0" rpy="0  0  3.1415926535897931" />
         <parent link="03"/>
         <child link="04" />
-        <axis xyz="0 1 0" />
-        <limit lower="-10" upper="10" effort="1000" velocity="10" />
-    </joint>
-    
-    <joint name="Wrist_0" type="revolute">
-        <origin xyz="0 0 0.39" rpy="0 0 0" />
-        <parent link="04"/>
-        <child link="05" />
         <axis xyz="0 0 1" />
         <limit lower="-10" upper="10" effort="1000" velocity="10" />
     </joint>
     
-    <joint name="Wrist_1" type="revolute">
-        <origin xyz="0 0 0" rpy="0 0 1.570796326795" />
-        <parent link="05"/>
-        <child link="06" />
-        <axis xyz="1 0 0" />
+    <joint name="Wrist_0" type="revolute">
+        <origin xyz="0  0  0.65" rpy="-1.5707963267948966  0 -1.5707963267948966" />
+        <parent link="04"/>
+        <child link="05" />
+        <axis xyz="0 0 -1" />
         <limit lower="-10" upper="10" effort="1000" velocity="10" />
     </joint>
     
-    <joint name="Wrist_2" type="revolute">
-        <origin xyz="0 0 0" rpy="0 0 0" />
-        <parent link="06"/>
-        <child link="07" />
+    <joint name="Wrist_1" type="revolute">
+        <origin xyz="0  0  0" rpy="0  1.5707963267948966  0" />
+        <parent link="05"/>
+        <child link="06" />
         <axis xyz="0 0 1" />
         <limit lower="-10" upper="10" effort="1000" velocity="10" />
     </joint>
