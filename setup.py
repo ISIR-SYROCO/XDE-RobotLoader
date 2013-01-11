@@ -2,7 +2,7 @@ from distutils.core import setup, Command
 
 from distutils.sysconfig import get_config_vars
 import os, sys, string, shutil, errno
-
+from site import USER_BASE
 
 package_name = 'xde_robot_loader'
 
@@ -27,8 +27,8 @@ class develop(Command):
 
 	def finalize_options(self):
 		self.py_version = (string.split(sys.version))[0]
-		prefix = get_config_vars('prefix')
-		self.config_vars = {'prefix': prefix,}
+		if self.prefix is None:
+		    self.prefix = USER_BASE
 		self.prefix = os.path.expanduser(self.prefix)
 
 	def run(self):
