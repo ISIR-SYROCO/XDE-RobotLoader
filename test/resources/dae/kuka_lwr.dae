@@ -401,6 +401,7 @@
           <bind_material>
             <technique_common>
               <instance_material symbol="KukaOrangeMat1" target="#KukaOrangeMat-material"/>
+              <instance_material symbol="KukaDarkMat2" target="#KukaDarkMat-material"/>
             </technique_common>
           </bind_material>
         </instance_geometry>
@@ -461,6 +462,7 @@
           <bind_material>
             <technique_common>
               <instance_material symbol="KukaOrangeMat1" target="#KukaOrangeMat-material"/>
+              <instance_material symbol="KukaDarkMat2" target="#KukaDarkMat-material"/>
             </technique_common>
           </bind_material>
         </instance_geometry>
@@ -476,6 +478,7 @@
           <bind_material>
             <technique_common>
               <instance_material symbol="KukaOrangeMat1" target="#KukaOrangeMat-material"/>
+              <instance_material symbol="KukaDarkMat2" target="#KukaDarkMat-material"/>
             </technique_common>
           </bind_material>
         </instance_geometry>
@@ -491,6 +494,7 @@
           <bind_material>
             <technique_common>
               <instance_material symbol="KukaOrangeMat1" target="#KukaOrangeMat-material"/>
+              <instance_material symbol="KukaDarkMat2" target="#KukaDarkMat-material"/>
             </technique_common>
           </bind_material>
         </instance_geometry>
@@ -506,6 +510,7 @@
           <bind_material>
             <technique_common>
               <instance_material symbol="KukaOrangeMat1" target="#KukaOrangeMat-material"/>
+              <instance_material symbol="KukaDarkMat2" target="#KukaDarkMat-material"/>
             </technique_common>
           </bind_material>
         </instance_geometry>
