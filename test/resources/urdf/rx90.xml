@@ -119,7 +119,7 @@
 
 
 
-    <joint name="shoulder_0" type="revolute">
+    <joint name="Shoulder_0" type="revolute">
         <origin xyz="0  0  0.42" rpy="0  0  0" />
         <parent link="00"/>
         <child link="01" />
@@ -127,7 +127,7 @@
         <limit lower="-10" upper="10" effort="1000" velocity="10" />
     </joint>
     
-    <joint name="shoulder_1" type="revolute">
+    <joint name="Shoulder_1" type="revolute">
         <origin xyz="0  0  0" rpy="1.5707963267948966  0  0" />
         <parent link="01"/>
         <child link="02" />
@@ -135,7 +135,7 @@
         <limit lower="-10" upper="10" effort="1000" velocity="10" />
     </joint>
     
-    <joint name="shoulder_2" type="revolute">
+    <joint name="Shoulder_2" type="revolute">
         <origin xyz="0  -0.45  0.049" rpy="-1.5707963267948966  0  -3.1415926535897931" />
         <parent link="02"/>
         <child link="03" />
