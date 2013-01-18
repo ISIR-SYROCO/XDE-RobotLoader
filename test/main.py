@@ -5,21 +5,11 @@
 # Import all modules: configure... #
 #                                  #
 ####################################
-import loader
-import deploy
-deploy.loadTypekitsAndPlugins()
+import xde_world_manager as xwm
+
 import dsimi.interactive
-shell = dsimi.interactive.shell() # a special version of IPython
+shell = dsimi.interactive.shell()
 
-import sys
-import os
-import inspect
-cpath = os.path.dirname(os.path.abspath(inspect.getfile( inspect.currentframe()))) + "/"
-sys.path.append(cpath)
-
-#TODO: to delete
-import numpy
-numpy.set_printoptions(precision=6, suppress=True)
 
 
 ###################
@@ -33,7 +23,7 @@ TIME_STEP = .01
 
 
 from xde_robot_loader import common
-clock, phy, graph = common.createAllAgents(TIME_STEP)
+clock, phy, graph = xwm.createAllAgents(TIME_STEP)
 
 
 
@@ -44,39 +34,31 @@ print "START ALL..."
 import desc
 
 
-#k1world = common.createKukaWorld("k1")
-#k2world = common.createKukaWorld("k2", [1,1,0])
-#genWorld2 = common.createWorldFromUrdfFile("resources/urdf/kuka.xml", "k2g", [.7,0,.4, 0, 0, 0, 1], 0.5)
-
-
-
-
-
-
-#groundWorld = common.createGroundWorld()
 groundWorld = common.createWorldFromUrdfFile("resources/urdf/ground.xml", "ground", [0,0,-0.4, 1, 0, 0, 0], True, 0.1, 0.05) #, "material.concrete")
-common.addWorld(groundWorld)
-
+xwm.addWorld(groundWorld)
 
 
 kukaWorld = common.createWorldFromUrdfFile("resources/urdf/kuka.xml", "k1g", [0,0,-0.0, 0.707,0,  0.707, 0], True, 0.5, 0.01)
 common.addContactLaws(kukaWorld)
-common.addWorld(kukaWorld)
+xwm.addWorld(kukaWorld)
 kuka = phy.s.GVM.Robot("k1g")
 kuka.lockJoints()
 
+
 kuka2World = common.createWorldFromUrdfFile("resources/urdf/kuka.xml", "k2g", [0,0,0.2, 0.707, 0, 0.707, 0], True, 0.5, 0.01)
-common.addWorld(kuka2World)
+xwm.addWorld(kuka2World)
 kuka2 = phy.s.GVM.Robot("k2g")
 kuka2.lockJoints()
 
 
-rx90World = common.createWorldFromUrdfFile("resources/urdf/rx90.xml", "rx90", [-0.5,0,0, 1, 0, 0, 0], True, 0.5, 0.01)
-common.addWorld(rx90World)
-rx90 = phy.s.GVM.Robot("rx90")
+
+#rx90World = common.createWorldFromUrdfFile("resources/urdf/rx90.xml", "rx90", [-0.5,0,0, 1, 0, 0, 0], True, 0.5, 0.01)
+#xwm.addWorld(rx90World)
+#rx90 = phy.s.GVM.Robot("rx90")
+#xwm.addMarkers(rx90World)
 
 
-#common.addMarkers(genWorld)
+
 
 #import physicshelper
 #k1dm = physicshelper.createDynamicModel(k1world, "k1")
@@ -84,17 +66,23 @@ rx90 = phy.s.GVM.Robot("rx90")
 
 
 
-#common.delWorld(kukaWorld)
+#common.delWorld(rx90World)
+
 kuka.unlockJoints()
 kuka2.unlockJoints()
 
 kuka.enableContactWithBody("groundground", True)
 kuka2.enableContactWithBody("groundground", True)
-#kuka.enableContactWithRobot("ground", True)
+##kuka.enableContactWithRobot("ground", True)
 kuka.enableContactWithRobot("k2g", True)
 
 #for b in ["00", "01", "02", "03", "04", "05", "06", "07"]:
 #    kuka.enableContactWithBody(b+"k2g", True)
+
+
+
+xwm.addInteraction([("groundground", "04k1g"), ("groundground", "05k1g")])
+xwm.removeAllInteractions()
 
 shell()
 
