@@ -31,13 +31,18 @@ def createAllAgents(TIME_STEP):
     import graphic
     graph = graphic.createTask()
     scene_name = graphic.init()
-    graph.s.Connectors.IConnectorBody.new("icb", "body_state_H", scene_name)
-    graph.s.Connectors.IConnectorFrame.new("icf", "framePosition", scene_name)
+    graph.s.Connectors.IConnectorBody.new("icb", "body_state_H", scene_name)    #to show bodies
+    graph.s.Connectors.IConnectorFrame.new("icf", "framePosition", scene_name)  #to lik with frames/markers
+    graph.s.Connectors.IConnectorContacts.new("icc", "contacts", scene_name)    #to show contacts info
+#    icc.setMaxProximity(.05)
+#    icc.setGlyphScale(2)
+
 
     print "CREATE PHYSIC..."
     phy = physic.createTask()
     physic.init(TIME_STEP)
     phy.s.Connectors.OConnectorBodyStateList.new("ocb", "body_state")
+    phy.s.Connectors.OConnectorContactBody.new("occ", "contacts")
 
     print "CREATE PORTS..."
     phy.addCreateInputPort("clock_trigger", "double")
@@ -47,6 +52,9 @@ def createAllAgents(TIME_STEP):
 
     graph.getPort("body_state_H").connectTo(phy.getPort("body_state_H"))
     graph.getPort("framePosition").connectTo(phy.getPort("body_state_H"))
+    graph.getPort("contacts").connectTo(phy.getPort("contacts"))
+
+
 
     phy.s.setPeriod(TIME_STEP)
     clock.s.setPeriod(TIME_STEP)
@@ -59,6 +67,21 @@ def createAllAgents(TIME_STEP):
 
 
 
+def addInteraction(pairs_of_contact):
+    occ = physic.phy.s.Connectors.OConnectorContactBody("occ")
+    for b1, b2 in pairs_of_contact:
+        occ.addInteraction(b1, b2)
+
+
+def removeInteraction(pairs_of_contact):
+    occ = physic.phy.s.Connectors.OConnectorContactBody("occ")
+    for b1, b2 in pairs_of_contact:
+        occ.removeInteraction(b1, b2)
+
+
+def removeAllInteractions():
+    occ = physic.phy.s.Connectors.OConnectorContactBody("occ")
+    occ.removeAllInteractions()
 
 
 def delWorld(old_world):
@@ -201,6 +224,13 @@ def delMarkers(world, bodies_to_hide=None):
             graphic.graph_scn.MarkersInterface.removeMarker(str(body_name))
         else:
             print "Warning: "+body_name+" marker does not exist. Nothing to do."
+
+
+
+
+
+
+
 
 
 
