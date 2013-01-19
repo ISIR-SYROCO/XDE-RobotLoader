@@ -1,0 +1,108 @@
+
+
+<!-- TODO: compute inertial parameters correctly: see to complete xyz and rpy-->
+<robot name="kuka">
+    <link name="link00">
+        <inertial>
+            <origin xyz=".2 0 0" rpy="0 0 0" />
+            <mass value="1."/>
+            <inertia ixx="0.01"  ixy="0"  ixz="0" iyy="0.01" iyz="0" izz="0.01" />
+        </inertial>
+    </link>
+    <link name="link01">
+        <inertial>
+            <origin xyz="0.4 0 0" rpy="0 0 0" />
+            <mass value="1."/>
+            <inertia ixx="0.01"  ixy="0"  ixz="0" iyy="0.01" iyz="0" izz="0.01" />
+        </inertial>
+        <visual>
+            <origin xyz="0.4 0 0" rpy="0 0 0"/>
+            <material name="material.metal">
+                <color rgba="1 0 0 1" />
+            </material>
+            <geometry>
+                <box size=".3 .05 .05"/>
+            </geometry>
+        </visual>
+    </link>
+    <link name="link02">
+        <inertial>
+            <origin xyz="0.2 0 0" rpy="0 0 0" />
+            <mass value="1."/>
+            <inertia ixx="0.01"  ixy="0"  ixz="0" iyy="0.01" iyz="0" izz="0.01" />
+        </inertial>
+        <visual>
+            <origin xyz="0.2 0 0" rpy="0 0 0"/>
+            <material name="material.metal">
+                <color rgba="0 1 0 1" />
+            </material>
+            <geometry>
+                <sphere radius=".1" />
+            </geometry>
+        </visual>
+    </link>
+    <link name="link03">
+        <inertial>
+            <origin xyz="0.2 0 0" rpy="0 0 0" />
+            <mass value="1."/>
+            <inertia ixx="0.01"  ixy="0"  ixz="0" iyy="0.01" iyz="0" izz="0.01" />
+        </inertial>
+        <visual>
+            <origin xyz="0.2 0 0" rpy="0 0 0"/>
+            <material name="material.metal">
+                <color rgba="0 0 1 1" />
+            </material>
+            <geometry>
+                <cylinder radius="0.02" length=".3"/>
+            </geometry>
+        </visual>
+    </link>
+    <link name="link04">
+        <inertial>
+            <origin xyz="0.2 0 0" rpy="0 0 0" />
+            <mass value="1."/>
+            <inertia ixx="0.01"  ixy="0"  ixz="0" iyy="0.01" iyz="0" izz="0.01" />
+        </inertial>
+        <visual>
+            <origin xyz="0.2 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="../dae/rx90.dae" scale=".1 .5 .5"/>
+            </geometry>
+            <material name="material.metal" />
+        </visual>
+    </link>
+    
+    
+    <joint name="joint_00_01" type="prismatic">
+        <origin xyz=".2 0 0" rpy="0 0 0" />
+        <parent link="link00"/>
+        <child link="link01" />
+        <axis xyz="1 0 0" />
+        <limit lower="-.3" upper=".3" effort="1000" velocity="10" />
+    </joint>
+    <joint name="joint_01_02" type="revolute">
+        <origin xyz=".4 0 0" rpy="0 0 0" />
+        <parent link="link01"/>
+        <child link="link02" />
+        <axis xyz="0 1 0" />
+        <limit lower="-10" upper="10" effort="1000" velocity="10" />
+    </joint>
+    <joint name="joint_02_03" type="revolute">
+        <origin xyz=".4 0 0" rpy="0 0 0" />
+        <parent link="link02"/>
+        <child link="link03" />
+        <axis xyz="0 1 0" />
+        <limit lower="-10" upper="10" effort="1000" velocity="10" />
+    </joint>
+    <joint name="joint_03_04" type="revolute">
+        <origin xyz=".4 0 0" rpy="0 0 0" />
+        <parent link="link03"/>
+        <child link="link04" />
+        <axis xyz="0 1 0" />
+        <limit lower="-10" upper="10" effort="1000" velocity="10" />
+    </joint>
+
+</robot>
+
+
+
