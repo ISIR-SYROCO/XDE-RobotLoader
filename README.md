@@ -1,8 +1,8 @@
 XDE-RobotLoader
 ===============
 
-Creation, destruction, serialization of robot in XDE from
-[urdf][1] descriptions. See example in `./XDE-RobotLoader/test`
+Module to create a xde world data structure from a
+[urdf][1] description of a robot. See example in `./XDE-RobotLoader/test`
 
 If `prefix` is not defined, install in python USER_BASE directory (`~/.local` by default)
 
