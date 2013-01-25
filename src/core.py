@@ -13,7 +13,7 @@ import numpy as np
 import os
 
 
-
+import urdf
 
 
 
@@ -98,6 +98,10 @@ def UrdfPose2Displacement(urdfPose):
     return lgsm.Displacement(lgsm.vector(urdfPose.position) ,RollPitchYaw2Quaternion(*urdfPose.rotation))
 
 
+def Displacement2UrdfPose(H):
+    return urdf.Pose([H.x, H.y, H.z], Quaternion2RollPitchYaw(H.getRotation()))
+
+
 def createBinding(world, phy_name, graph_node_name, comp_name):
     """
     """
@@ -118,7 +122,19 @@ def createComposite(world, graph_node_name, composite_name, offset):
 
 
 
+def getParentNode(root_node, node_name):
+    parent_nodes = []
+    def getNodeName(node):
+        if node_name in [c.name for c in node.children]:
+            parent_nodes.append(node)
+    desc.core.visitDepthFirst(getNodeName, root_node)
 
+    if len(parent_nodes) == 0:
+        return None
+    elif len(parent_nodes) == 1:
+        return parent_nodes[0]
+    else:
+        raise RuntimeError, "found many parents in tree. problem..."
 
 
 def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base = True, minimal_damping=0.001, composite_offset=0.001): #TODO: delete defined_mat
@@ -152,47 +168,91 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
     #######################################################
     # Save meshes for GRAPHICAL scene and create bindings #
     #######################################################
+    # We create the graphical tree as a comb.
+    # The root node is the "urdfWorld.scene.graphical_scene.root_node".
+    # Each child node represents a body(/segment?) in the physical scene.
+    # This way, bindings will be created between physical and graphical nodes.
+    # With all these graphical nodes, we create the following structure to
+    # add the corresponding meshes:
+    #
+    # root_node
+    #  |_________________________________________ _ _ _
+    #  |                     |            |     |
+    # body1_node            body2_node
+    #  |                     |
+    # body1_transform_node   .
+    #  |                     .
+    # body1_mesh_node        .
+    #
+    # The body_node position will change during simulations, due to the bindings
+    # The body_transform_node represents the position/scale defined in the URDF
+    # The body_mesh_node finally represents the mesh defined in URDF
+    #
     print "GET GRAPHICAL TREE..."
     binding_phy_graph = {}
     for link_name in urdfRobot.links.keys():
         robotLinkName = link_name+robotName
         binding_phy_graph[robotLinkName] = robotLinkName
+        #################
+        # add body node #
+        #################
+        graph_node = desc.graphic.addGraphicalNode(urdfWorld.scene.graphical_scene, name=robotLinkName, parent_node=urdfWorld.scene.graphical_scene.root_node)
+        graph_node.position.extend([0,0,0,1,0,0,0])
+        graph_node.scale.extend([1,1,1])
 
         if robotLinkName in urdfGraphNodes:
             mesh_filename, mesh_position, mesh_scale = urdfGraphNodes[robotLinkName]
             filename, sep, node_in_file = mesh_filename.partition("#")
+            
+            ###########################
+            # add body transform node #
+            ###########################
+            transform_gn = desc.graphic.addGraphicalNode(urdfWorld.scene.graphical_scene, name=robotLinkName+"_mesh_transform", parent_node=graph_node)
+            desc.graphic.setNodeScale(transform_gn, mesh_scale)
+            desc.graphic.setNodePosition(transform_gn, mesh_position)
 
-            tmp_world = desc.scene.parseColladaFile( filename ,
+            tmp_world = desc.scene.parseColladaFile( filename,
                                                      append_label_library = robotName,
                                                      append_label_nodes = robotName,
                                                      append_label_graph_meshes = robotName )
-            
+
             if robotLinkName in urdfMatNodes:
                 mat = urdfWorld.library.materials.add()
                 mat.name = robotLinkName+"_material"
                 desc.material.fillColorMaterial(mat, [ float(x) for x in urdfMatNodes[robotLinkName] ])
                 desc.graphic.applyMaterialSet(tmp_world.scene.graphical_scene.root_node, material_set=[mat.name])
             else:
-                desc.graphic.applyMaterialSet(tmp_world.scene.graphical_scene.root_node, material_set=["xde/YellowOpaqueAvatars", "xde/GreenOpaqueAvatars", "xde/RedOpaqueAvatars"]) #TODO: delete
+                desc.graphic.applyMaterialSet(tmp_world.scene.graphical_scene.root_node, material_set=["xde/YellowOpaqueAvatars", "xde/GreenOpaqueAvatars", "xde/RedOpaqueAvatars"]) #TODO: delete?
 
             if len(node_in_file) > 0:
                 node_to_copy = node_in_file+robotName
             else:
                 node_to_copy = "root"+robotName
-            
+
             ######################
             # add body mesh node #
             ######################
-            desc.simple.graphic.addGraphicalTree(urdfWorld, tmp_world,
-                                                 node_name = robotLinkName, #+"_mesh",                                          # name of of mesh in dest world
-                                                 dest_parent_node_name = robotName+"root", #robotLinkName+"_mesh_transform",    # parent node of mesh in dest world
-                                                 src_node_name=node_to_copy)                                                    # name of node to copy in src world
+            child_node  = desc.core.findInTree(tmp_world.scene.graphical_scene.root_node, node_to_copy)
+            parent_node = getParentNode(tmp_world.scene.graphical_scene.root_node,        node_to_copy)
+            if parent_node is not None:
+                Hp_c = lgsm.Displacement(parent_node.position[:]).inverse() * lgsm.Displacement(child_node.position[:])
+            else:
+                Hp_c = lgsm.Displacement()
+            
+            ud = Displacement2UrdfPose(Hp_c.inverse())
+            print child_node.name, ": <origin xyz=\"{} {} {}\" rpy=\"{} {} {}\" />".format(ud.position[0], ud.position[1], ud.position[2], ud.rotation[0], ud.rotation[1], ud.rotation[2])
+            
+            child_node.ClearField("position")
+            child_node.position.extend(Hp_c.tolist())
+            
+            
+            mesh_node = desc.simple.graphic.addGraphicalTree(urdfWorld, tmp_world,
+                                                            node_name=robotLinkName+"_mesh",                        # name of of mesh in dest world
+                                                            dest_parent_node_name=robotLinkName+"_mesh_transform",  # parent node of mesh in dest world
+                                                            src_node_name=node_to_copy)                             # name of node to copy in src world
 
-        else:
-            graph_node = desc.graphic.addGraphicalNode(urdfWorld.scene.graphical_scene, name=robotLinkName, parent_node=urdfWorld.scene.graphical_scene.root_node)
-            graph_node.position.extend([0,0,0,1,0,0,0])
-            graph_node.scale.extend([1,1,1])
-
+#    import dsimi.interactive
+#    dsimi.interactive.shell()()
 
 
     #######################################################
@@ -288,7 +348,6 @@ simple_shapes_dae = os.path.dirname(__file__) + os.sep + "simple_shapes.dae" # D
 def parse_urdf(urdfFileName, robotName, minimal_damping):
     """
     """
-    import urdf
     robot = urdf.URDF.load_xml_file(urdfFileName)
 
     phy_nodes      = {}
