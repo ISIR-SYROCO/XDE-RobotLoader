@@ -120,6 +120,40 @@ def createComposite(world, graph_node_name, composite_name, offset):
 
 
 
+import desc.simple.scene
+import desc.simple.physic
+def addObjectFromDae(graphFileName, objectName, H_init=None, is_fixed_base = True, collFileName=None, composite_offset=0.001, mass=1., material_name="material.concrete"):
+    object_world = desc.simple.scene.parseColladaFile(graphFileName,
+                                                        append_label_library = objectName,
+                                                        append_label_nodes = objectName,
+                                                        append_label_graph_meshes = objectName)
+    if collFileName is not None:
+        coll_object_world = desc.simple.scene.parseColladaFile(collFileName, append_label_library="_"+objectName+".collision")
+    else:
+        coll_object_world = object_world
+
+    desc.core.printTree(object_world.scene.graphical_scene.root_node)
+#    desc.simple.graphic.addGraphicalTree(world, ground_world, node_name="ground")
+    compositeName = objectName+".comp"
+    desc.simple.collision.addCompositeMesh(object_world, coll_object_world, composite_name=compositeName, offset=composite_offset, clean_meshes=True) #, ignore_library_conflicts=False)
+    desc.simple.physic.addRigidBody(object_world, objectName, mass=1, contact_material=material_name)
+    
+    if H_init is None:
+        H_init = lgsm.Displacementd()
+    if isinstance(H_init, list) or isinstance(H_init, tuple):
+        H_init=lgsm.Displacementd(*H_init)
+
+    if is_fixed_base is True:
+        desc.simple.physic.addFixedJoint(object_world, objectName+".joint", objectName, H_init)
+    else:
+        desc.simple.physic.addFreeJoint(object_world, objectName+".joint", objectName, H_init)
+
+    createBinding(object_world, objectName, "root"+objectName, compositeName)
+
+    return object_world
+
+
+
 
 def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base = True, minimal_damping=0.001, composite_offset=0.001): #TODO: delete defined_mat
     """
@@ -407,6 +441,9 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
 
 
     return robot, phy_nodes, graph_nodes, coll_nodes, material_nodes
+
+
+
 
 
 
