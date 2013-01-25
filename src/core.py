@@ -219,7 +219,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
                 node_to_copy = "root"+robotName
                 
             createComposite(tmp_world, node_to_copy, composite_name, composite_offset)
-            desc.simple.collision.addCompositeMesh(urdfWorld, tmp_world, composite_name, src_node_name=node_to_copy, offset=composite_offset)
+            desc.simple.collision.addCompositeMesh(urdfWorld, tmp_world, composite_name, src_node_name=node_to_copy, offset=composite_offset, clean_meshes=True)
 
 
             binding_phy_coll[robotLinkName] = composite_name
