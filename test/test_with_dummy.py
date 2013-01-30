@@ -44,14 +44,20 @@ xwm.addWorld(groundWorld)
 #kuka = phy.s.GVM.Robot("k1g")
 
 
-dummyWorld = xrl.createWorldFromUrdfFile("resources/urdf/dummy2.xml", "dummy", [0,0,.5, 1, 0, 0, 0], True, 0.5, 0.01)
+rxWorld = xrl.createWorldFromUrdfFile("resources/urdf/rx90.xml", "rx", [-1,0,0.4, 1,0,0,0], True, 0.5, 0.01)
+xrl.addContactLaws(rxWorld)
+xwm.addWorld(rxWorld, True)
+rx = phy.s.GVM.Robot("rx")
+
+
+dummyWorld = xrl.createWorldFromUrdfFile("resources/urdf/dummy3.xml", "dummy", [0,0,.5, 1, 0, 0, 0], True, 0.5, 0.01)
 xwm.addWorld(dummyWorld, True)
 dummy = phy.s.GVM.Robot("dummy")
 xwm.addMarkers(dummyWorld)
 
 
 dummy.enableContactWithBody("groundground", True)
-
+rx.enableContactWithBody("groundground", True)
 
 #kuka.enableContactWithBody("groundground", True)
 ##kuka2.enableContactWithBody("groundground", True)

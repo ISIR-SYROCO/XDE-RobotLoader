@@ -54,6 +54,7 @@ xwm.addMarkers(rx90World)
 
 
 kuka.enableContactWithBody("groundground", True)
+rx90.enableContactWithBody("groundground", True)
 #kuka2.enableContactWithBody("groundground", True)
 ##kuka.enableContactWithRobot("ground", True)
 #kuka.enableContactWithRobot("k2g", True)

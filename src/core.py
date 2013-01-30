@@ -71,27 +71,56 @@ def vec2SkewMatrix(vec):
     return skm
 
 
-
-def RollPitchYaw2Quaternion(roll, pitch, yaw):
+#TODO: warning, to delete, seem to return the opposite value
+def RollPitchYaw2Quaternion_deprecated(roll, pitch, yaw):
     """ Give the Quaternion coresponding to the roll,pitch,yaw rotation
     """
-    cph,sph = np.cos(roll), np.sin(roll)
+    cph,sph = np.cos(roll),  np.sin(roll)
     cth,sth = np.cos(pitch), np.sin(pitch)
-    cps,sps = np.cos(yaw), np.sin(yaw)
+    cps,sps = np.cos(yaw),   np.sin(yaw)
     R = [[cth*cps              , cth*sps              , -sth   ],
          [sph*sth*cps - cph*sps, sph*sth*sps + cph*cps, cth*sph],
          [cph*sth*cps + sph*sps, cph*sth*sps - sph*cps, cth*cph]]
     return lgsm.Rotation3.fromMatrix(np.matrix(R))
 
 
+def RollPitchYaw2Quaternion(roll, pitch, yaw):
+    """ Give the Quaternion coresponding to the roll,pitch,yaw rotation
+    """
+    cph,sph = np.cos(roll/2.),  np.sin(roll/2.)
+    cth,sth = np.cos(pitch/2.), np.sin(pitch/2.)
+    cps,sps = np.cos(yaw/2.),   np.sin(yaw/2.)
+    
+    q0 = cph*cth*cps + sph*sth*sps
+    q1 = sph*cth*cps - cph*sth*sps
+    q2 = cph*sth*cps + sph*cth*sps
+    q3 = cph*cth*sps - sph*sth*cps
+    
+    Q = lgsm.Quaternion(q0,q1,q2,q3)
+    Q.normalize()
+    return Q
+
+
+#TODO: warning, good value, but come from the same document as the RollPitchYaw2Quaternion_deprecated above, so maybe delete it
+def Quaternion2RollPitchYaw_deprecated(Q):
+    """
+    """
+    q0, q1, q2, q3 = Q
+    rpy = [ np.arctan2(2*q2*q3 + 2*q0*q1, q3**2 - q2**2 - q1**2 + q0**2),
+           -np.arcsin(2*q1*q3 - 2*q0*q2),
+            np.arctan2(2*q1*q2 + 2*q0*q3, q1**2 + q0**2 - q3**2 - q2**2)]
+    return rpy
+
+
 def Quaternion2RollPitchYaw(Q):
     """
     """
     q0, q1, q2, q3 = Q
-    rpy = [np.arctan2(2*q2*q3 + 2*q0*q1, q3**2 - q2**2 - q1**2 + q0**2),
-           -np.arcsin(2*q1*q3 - 2*q0*q2),
-           np.arctan2(2*q1*q2 + 2*q0*q3, q1**2 + q0**2 - q3**2 - q2**2)]
+    rpy = [ np.arctan2(2*(q0*q1 + q2*q3), 1 - 2*(q1**2 + q2**2)),
+            np.arcsin(2*(q0*q2 - q1*q3)),
+            np.arctan2(2*(q0*q3 + q1*q2), 1 - 2*(q2**2 + q3**2))]
     return rpy
+
 
 
 def UrdfPose2Displacement(urdfPose):
@@ -240,8 +269,8 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
             else:
                 Hp_c = lgsm.Displacement()
             
-            ud = Displacement2UrdfPose(Hp_c.inverse())
-            print child_node.name, ": <origin xyz=\"{} {} {}\" rpy=\"{} {} {}\" />".format(ud.position[0], ud.position[1], ud.position[2], ud.rotation[0], ud.rotation[1], ud.rotation[2])
+#            ud = Displacement2UrdfPose(Hp_c.inverse())
+#            print child_node.name, ": <origin xyz=\"{} {} {}\" rpy=\"{} {} {}\" />".format(ud.position[0], ud.position[1], ud.position[2], ud.rotation[0], ud.rotation[1], ud.rotation[2])
             
             child_node.ClearField("position")
             child_node.position.extend(Hp_c.tolist())
