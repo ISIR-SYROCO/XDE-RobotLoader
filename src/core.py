@@ -137,13 +137,14 @@ def getParentNode(root_node, node_name):
         raise RuntimeError, "found many parents in tree. problem..."
 
 
+
+
+
 def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base = True, minimal_damping=0.001, composite_offset=0.001): #TODO: delete defined_mat
     """
     """
     urdfWorld = desc.scene.createWorld(name=robotName+"root")
-
     root_node = urdfWorld.scene.graphical_scene.root_node
-#    children_nodes = root_node.children                     #TODO: if structure is not a comb, but a tree
 
     urdfRobot, urdfNodes, urdfGraphNodes, urdfCollNodes, urdfMatNodes = parse_urdf(urdfFileName, robotName, minimal_damping)
 
@@ -250,6 +251,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
                                                             node_name=robotLinkName+"_mesh",                        # name of of mesh in dest world
                                                             dest_parent_node_name=robotLinkName+"_mesh_transform",  # parent node of mesh in dest world
                                                             src_node_name=node_to_copy)                             # name of node to copy in src world
+                                                            #ignore_library_conflicts=True)
 
 #    import dsimi.interactive
 #    dsimi.interactive.shell()()
@@ -272,14 +274,43 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
                                                      append_label_nodes = robotName,
                                                      append_label_graph_meshes = robotName )
 
-            composite_name = robotLinkName+".comp"
+            
+
+            ################ CREATE DUMMY TREE to get coll tree-structure: ################
+            dummy_world = desc.scene.createWorld(name=robotLinkName+"_coll_mesh")
+            transform_gn = desc.graphic.addGraphicalNode(dummy_world.scene.graphical_scene, name=robotLinkName+"_coll_mesh_transform") #, parent_node=robotLinkName+"_coll_mesh")
+            desc.graphic.setNodeScale(transform_gn, mesh_scale)
+            desc.graphic.setNodePosition(transform_gn, mesh_position)
+            
+            
             if len(node_in_file) > 0:
                 node_to_copy = node_in_file+robotName
             else:
                 node_to_copy = "root"+robotName
+
+            #### add body mesh node ####
+            child_node  = desc.core.findInTree(tmp_world.scene.graphical_scene.root_node, node_to_copy)
+            parent_node = getParentNode(tmp_world.scene.graphical_scene.root_node,        node_to_copy)
+            if parent_node is not None:
+                Hp_c = lgsm.Displacement(parent_node.position[:]).inverse() * lgsm.Displacement(child_node.position[:])
+            else:
+                Hp_c = lgsm.Displacement()
+
+            child_node.ClearField("position")
+            child_node.position.extend(Hp_c.tolist())
+            
+            mesh_node = desc.simple.graphic.addGraphicalTree(dummy_world, tmp_world,
+                                                            node_name=node_to_copy,                           # name of of mesh in dest world
+                                                            dest_parent_node_name=robotLinkName+"_coll_mesh_transform",     # parent node of mesh in dest world
+                                                            src_node_name=node_to_copy)                                     # name of node to copy in src world
+            ################ END OF DUMMY TREE ################
+
+
+            composite_name = robotLinkName+".comp"
+            
                 
-            createComposite(tmp_world, node_to_copy, composite_name, composite_offset)
-            desc.simple.collision.addCompositeMesh(urdfWorld, tmp_world, composite_name, src_node_name=node_to_copy, offset=composite_offset)
+            createComposite(dummy_world, robotLinkName+"_coll_mesh", composite_name, composite_offset)
+            desc.simple.collision.addCompositeMesh(urdfWorld, dummy_world, composite_name, src_node_name=robotLinkName+"_coll_mesh", offset=composite_offset)
 
 
             binding_phy_coll[robotLinkName] = composite_name

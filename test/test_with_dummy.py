@@ -38,22 +38,22 @@ groundWorld = xrl.createWorldFromUrdfFile("resources/urdf/ground.xml", "ground",
 xwm.addWorld(groundWorld)
 
 
-kukaWorld = xrl.createWorldFromUrdfFile("resources/urdf/kuka.xml", "k1g", [-1,0,0.4, 1,0,0,0], True, 0.5, 0.01)
-xrl.addContactLaws(kukaWorld)
-xwm.addWorld(kukaWorld, True)
-kuka = phy.s.GVM.Robot("k1g")
+#kukaWorld = xrl.createWorldFromUrdfFile("resources/urdf/kuka.xml", "k1g", [-1,0,0.4, 1,0,0,0], True, 0.5, 0.01)
+#xrl.addContactLaws(kukaWorld)
+#xwm.addWorld(kukaWorld, True)
+#kuka = phy.s.GVM.Robot("k1g")
 
 
-dummyWorld = xrl.createWorldFromUrdfFile("resources/urdf/dummy.xml", "dummy", [1.,0,1, 1, 0, 0, 0], True, 0.5, 0.01)
+dummyWorld = xrl.createWorldFromUrdfFile("resources/urdf/dummy2.xml", "dummy", [0,0,.5, 1, 0, 0, 0], True, 0.5, 0.01)
 xwm.addWorld(dummyWorld, True)
-rx90 = phy.s.GVM.Robot("dummy")
+dummy = phy.s.GVM.Robot("dummy")
 xwm.addMarkers(dummyWorld)
 
 
+dummy.enableContactWithBody("groundground", True)
 
 
-
-kuka.enableContactWithBody("groundground", True)
+#kuka.enableContactWithBody("groundground", True)
 ##kuka2.enableContactWithBody("groundground", True)
 ###kuka.enableContactWithRobot("ground", True)
 ##kuka.enableContactWithRobot("k2g", True)
@@ -63,10 +63,11 @@ kuka.enableContactWithBody("groundground", True)
 
 
 
-#xwm.addInteraction([("groundground", "04k1g"), ("groundground", "05k1g")])
+xwm.addInteraction([("groundground", "link03dummy")])
 #xwm.removeAllInteractions()
 
-xwm.stopSimulation()
+#xwm.stopSimulation()
+xwm.startSimulation()
 
 shell()
 
