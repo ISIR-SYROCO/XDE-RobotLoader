@@ -1,6 +1,5 @@
 from distutils.core import setup, Command
 
-from distutils.sysconfig import get_config_vars
 import os, sys, string, shutil, errno
 from site import USER_BASE
 
