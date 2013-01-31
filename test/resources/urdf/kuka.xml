@@ -9,14 +9,14 @@
             <inertia ixx="0.00805112828804"  ixy="0"  ixz="0" iyy="0.00845152236845" iyz="0" izz="0.00863585824764" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0 -0.3105" rpy="0  0  0" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_base"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0 -0.3105" rpy="0  0  0" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_base"/>
             </geometry>
@@ -29,14 +29,14 @@
             <inertia ixx="0.0129545076394"  ixy="0"  ixz="0" iyy="0.0128178432409" iyz="0" izz="0.00442072765916" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0" rpy="1.5707962513  0  0" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_1"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0" rpy="1.5707962513  0  0" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_1"/>
             </geometry>
@@ -49,14 +49,14 @@
             <inertia ixx="0.0132950018592"  ixy="0"  ixz="0" iyy="0.0131003199685" iyz="0" izz="0.0044657387969" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0.2" rpy="1.57079519432  0  3.14159250259" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_2"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0.2" rpy="1.57079519432  0  3.14159250259" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_2"/>
             </geometry>
@@ -69,14 +69,14 @@
             <inertia ixx="0.0127763513867"  ixy="0"  ixz="0" iyy="0.0128011372133" iyz="0" izz="0.0043627376553" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0" rpy="1.57079519432  0  3.14159250259" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_3"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0" rpy="1.57079519432  0  3.14159250259" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_3"/>
             </geometry>
@@ -89,14 +89,14 @@
             <inertia ixx="0.0132276730313"  ixy="0"  ixz="0" iyy="0.0130734228464" iyz="0" izz="0.00439977729281" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0.2" rpy="1.57079519432  0  3.14159250259" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_4"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0.2" rpy="1.57079519432  0  3.14159250259" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_4"/>
             </geometry>
@@ -109,14 +109,14 @@
             <inertia ixx="0.0124407882151"  ixy="0"  ixz="0" iyy="0.0124710412724" iyz="0" izz="0.00438005667842" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0" rpy="1.57079519432  0  3.14159250259" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_5"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0" rpy="1.57079519432  0  3.14159250259" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_5"/>
             </geometry>
@@ -129,14 +129,14 @@
             <inertia ixx="0.00284169077177"  ixy="0"  ixz="0" iyy="0.00298256896714" iyz="0" izz="0.00296892557443" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0.078" rpy="1.57081557874  0  -1.57079617584" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_6"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0.078" rpy="1.57081557874  0  -1.57079617584" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_6"/>
             </geometry>
@@ -149,14 +149,14 @@
             <inertia ixx="5.81502716972e-05"  ixy="0"  ixz="0" iyy="5.84472283068e-05" iyz="0" izz="9.68983240391e-05" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0.21" rpy="1.57079674929  0  3.14159250259" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_7"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0  0.21" rpy="1.57079674929  0  3.14159250259" />
             <geometry>
                 <mesh filename="../dae/kuka_lwr.dae#kuka_7"/>
             </geometry>
