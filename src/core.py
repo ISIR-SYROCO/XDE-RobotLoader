@@ -71,18 +71,6 @@ def vec2SkewMatrix(vec):
     return skm
 
 
-#TODO: warning, to delete, seem to return the opposite value
-def RollPitchYaw2Quaternion_deprecated(roll, pitch, yaw):
-    """ Give the Quaternion coresponding to the roll,pitch,yaw rotation
-    """
-    cph,sph = np.cos(roll),  np.sin(roll)
-    cth,sth = np.cos(pitch), np.sin(pitch)
-    cps,sps = np.cos(yaw),   np.sin(yaw)
-    R = [[cth*cps              , cth*sps              , -sth   ],
-         [sph*sth*cps - cph*sps, sph*sth*sps + cph*cps, cth*sph],
-         [cph*sth*cps + sph*sps, cph*sth*sps - sph*cps, cth*cph]]
-    return lgsm.Rotation3.fromMatrix(np.matrix(R))
-
 
 def RollPitchYaw2Quaternion(roll, pitch, yaw):
     """ Give the Quaternion coresponding to the roll,pitch,yaw rotation
@@ -100,16 +88,6 @@ def RollPitchYaw2Quaternion(roll, pitch, yaw):
     Q.normalize()
     return Q
 
-
-#TODO: warning, good value, but come from the same document as the RollPitchYaw2Quaternion_deprecated above, so maybe delete it
-def Quaternion2RollPitchYaw_deprecated(Q):
-    """
-    """
-    q0, q1, q2, q3 = Q
-    rpy = [ np.arctan2(2*q2*q3 + 2*q0*q1, q3**2 - q2**2 - q1**2 + q0**2),
-           -np.arcsin(2*q1*q3 - 2*q0*q2),
-            np.arctan2(2*q1*q2 + 2*q0*q3, q1**2 + q0**2 - q3**2 - q2**2)]
-    return rpy
 
 
 def Quaternion2RollPitchYaw(Q):
@@ -170,22 +148,30 @@ def getParentNode(root_node, node_name):
 
 import desc.simple.scene
 import desc.simple.physic
-def addObjectFromDae(graphFileName, objectName, H_init=None, is_fixed_base = True, collFileName=None, composite_offset=0.001, mass=1., material_name="material.concrete"):
+def addObjectFromDae(graphFileName, objectName, H_init=None, is_fixed_base = True, collFileName=None, composite_offset=0.001, mass=1., moments_of_inertia=None, H_inertia_segment=None, material_name="material.concrete"):
+
+    ##### CREATE WORLD & FILL GRAPHICAL TREE
     object_world = desc.simple.scene.parseColladaFile(graphFileName,
                                                         append_label_library = objectName,
                                                         append_label_nodes = objectName,
                                                         append_label_graph_meshes = objectName)
+
+    ##### FILL COLLISION TREE
+    compositeName = objectName+".comp"
     if collFileName is not None:
         coll_object_world = desc.simple.scene.parseColladaFile(collFileName, append_label_library="_"+objectName+".collision")
     else:
         coll_object_world = object_world
+    desc.simple.collision.addCompositeMesh(object_world, coll_object_world, composite_name=compositeName, offset=composite_offset, clean_meshes=True)
 
-    desc.core.printTree(object_world.scene.graphical_scene.root_node)
-#    desc.simple.graphic.addGraphicalTree(world, ground_world, node_name="ground")
-    compositeName = objectName+".comp"
-    desc.simple.collision.addCompositeMesh(object_world, coll_object_world, composite_name=compositeName, offset=composite_offset, clean_meshes=True) #, ignore_library_conflicts=False)
-    desc.simple.physic.addRigidBody(object_world, objectName, mass=1, contact_material=material_name)
-    
+    ##### FILL PHYSICAL TREE
+    node = desc.simple.physic.addRigidBody(object_world, objectName)
+    if moments_of_inertia is None:
+        moments_of_inertia = [0,0,0]
+    if H_inertia_segment is None:
+        H_inertia_segment = lgsm.Displacement()
+    desc.physic.fillRigidBody(node.rigid_body,mass=mass, moments_of_inertia=moments_of_inertia, H_inertia_segment=H_inertia_segment, contact_material=material_name)
+
     if H_init is None:
         H_init = lgsm.Displacementd()
     if isinstance(H_init, list) or isinstance(H_init, tuple):
@@ -196,6 +182,7 @@ def addObjectFromDae(graphFileName, objectName, H_init=None, is_fixed_base = Tru
     else:
         desc.simple.physic.addFreeJoint(object_world, objectName+".joint", objectName, H_init)
 
+    ##### CREATE BINDINGS
     createBinding(object_world, objectName, "root"+objectName, compositeName)
 
     return object_world
