@@ -25,14 +25,14 @@
             <mass value="1.5"/>
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0 -0.42" rpy="0  0  0" />
             <geometry>
                 <mesh filename="../dae/rx90.dae#Shoulder"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0 -0.42" rpy="0  0  0" />
             <geometry>
                 <mesh filename="../dae/rx90.dae#Shoulder"/>
             </geometry>
@@ -43,14 +43,14 @@
             <mass value="1.5"/>
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0.42  0" rpy="1.57079632675  0  0" />
             <geometry>
                 <mesh filename="../dae/rx90.dae#Arm"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0.42  0" rpy="1.57079632675  0  0" />
             <geometry>
                 <mesh filename="../dae/rx90.dae#Arm"/>
             </geometry>
@@ -61,14 +61,14 @@
             <mass value="1.5"/>
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0.87  -0.049" rpy="1.57079632675  0  0" />
             <geometry>
                 <mesh filename="../dae/rx90.dae#Elbow"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  0.87  -0.049" rpy="1.57079632675  0  0" />
             <geometry>
                 <mesh filename="../dae/rx90.dae#Elbow"/>
             </geometry>
@@ -79,14 +79,14 @@
             <mass value="1.5"/>
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  -0.049  -0.87" rpy="0  0  0" />
             <geometry>
                 <mesh filename="../dae/rx90.dae#Forearm"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0  -0.049  -0.87" rpy="0  0  0" />
             <geometry>
                 <mesh filename="../dae/rx90.dae#Forearm"/>
             </geometry>
@@ -97,14 +97,14 @@
             <mass value="1.5"/>
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="-1.52  0  -0.049" rpy="1.57079632679  0  1.57079632675" />
             <geometry>
                 <mesh filename="../dae/rx90.dae#Hand"/>
             </geometry>
             <material name="material.metal" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="-1.52  0  -0.049" rpy="1.57079632679  0  1.57079632675" />
             <geometry>
                 <mesh filename="../dae/rx90.dae#Hand"/>
             </geometry>
@@ -128,7 +128,7 @@
     </joint>
     
     <joint name="Shoulder_1" type="revolute">
-        <origin xyz="0  0  0" rpy="1.5707963267948966  0  0" />
+        <origin xyz="0  0  0" rpy="-1.5707963267948966  0  0" />
         <parent link="01"/>
         <child link="02" />
         <axis xyz="0  0  1" />
@@ -152,7 +152,7 @@
     </joint>
     
     <joint name="Wrist_0" type="revolute">
-        <origin xyz="0  0  0.65" rpy="-1.5707963267948966  0 -1.5707963267948966" />
+        <origin xyz="0  0  0.65" rpy="0  -1.5707963267948966  -1.5707963267948966" />
         <parent link="04"/>
         <child link="05" />
         <axis xyz="0 0 -1" />
