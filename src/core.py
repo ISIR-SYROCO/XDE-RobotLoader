@@ -166,8 +166,6 @@ def addObjectFromDae(graphFileName, objectName, H_init=None, is_fixed_base = Tru
 
     ##### FILL PHYSICAL TREE
     node = desc.simple.physic.addRigidBody(object_world, objectName)
-    if moments_of_inertia is None:
-        moments_of_inertia = [0,0,0]
     if H_inertia_segment is None:
         H_inertia_segment = lgsm.Displacement()
     desc.physic.fillRigidBody(node.rigid_body,mass=mass, moments_of_inertia=moments_of_inertia, H_inertia_segment=H_inertia_segment, contact_material=material_name)
@@ -297,12 +295,17 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
             child_node.position.extend(Hp_c.tolist())
             
             
+            desc.core.printTree(tmp_world.scene.graphical_scene.root_node)
+            desc.core.printTree(urdfWorld.scene.graphical_scene.root_node)
+            
             mesh_node = desc.simple.graphic.addGraphicalTree(urdfWorld, tmp_world,
                                                             node_name=robotLinkName+"_mesh",                        # name of of mesh in dest world
                                                             dest_parent_node_name=robotLinkName+"_mesh_transform",  # parent node of mesh in dest world
                                                             src_node_name=node_to_copy)                             # name of node to copy in src world
                                                             #ignore_library_conflicts=True)
 
+            
+            
 #    import dsimi.interactive
 #    dsimi.interactive.shell()()
 
@@ -360,7 +363,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
             
                 
             createComposite(dummy_world, robotLinkName+"_coll_mesh", composite_name, composite_offset)
-            desc.simple.collision.addCompositeMesh(urdfWorld, dummy_world, composite_name, src_node_name=robotLinkName+"_coll_mesh", offset=composite_offset)
+            desc.simple.collision.addCompositeMesh(urdfWorld, dummy_world, composite_name, src_node_name=robotLinkName+"_coll_mesh", offset=composite_offset, clean_meshes=True)
 
 
 
