@@ -200,7 +200,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
     #########################################################
     # Create kinematic tree and mechanism in physical scene #
     #########################################################
-    print "GET KINEMATIC TREE..."
+    #print "GET KINEMATIC TREE..."
     kin_tree = urdfNodes[urdfRobot.get_root()+robotName]
 
     if H_init is None:
@@ -237,7 +237,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
     # The body_transform_node represents the position/scale defined in the URDF
     # The body_mesh_node finally represents the mesh defined in URDF
     #
-    print "GET GRAPHICAL TREE..."
+    #print "GET GRAPHICAL TREE..."
     binding_phy_graph = {}
     for link_name in urdfRobot.links.keys():
         robotLinkName = link_name+robotName
@@ -299,18 +299,14 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
                                                             node_name=robotLinkName+"_mesh",                        # name of of mesh in dest world
                                                             dest_parent_node_name=robotLinkName+"_mesh_transform",  # parent node of mesh in dest world
                                                             src_node_name=node_to_copy)                             # name of node to copy in src world
-                                                            #ignore_library_conflicts=True)
 
 
-
-#    import dsimi.interactive
-#    dsimi.interactive.shell()()
 
 
     #######################################################
     # Save meshes for COLLISION scene and create bindings #
     #######################################################
-    print "GET COLLISION TREE..."
+    #print "GET COLLISION TREE..."
     binding_phy_coll = {}
     #for link_name, mesh_filename in urdfCollNodes.items():
     for link_name in urdfRobot.links.keys():
@@ -354,20 +350,16 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
                                                             dest_parent_node_name=robotLinkName+"_coll_mesh_transform",     # parent node of mesh in dest world
                                                             src_node_name=node_to_copy)                                     # name of node to copy in src world
             ################ END OF DUMMY TREE ################
-
-
             composite_name = robotLinkName+".comp"
-
 
             createComposite(dummy_world, robotLinkName+"_coll_mesh", composite_name, composite_offset)
             desc.simple.collision.addCompositeMesh(urdfWorld, dummy_world, composite_name, src_node_name=robotLinkName+"_coll_mesh", offset=composite_offset, clean_meshes=True)
-
-
 
             binding_phy_coll[robotLinkName] = composite_name
 
         else:
             binding_phy_coll[robotLinkName] = ""
+
 
 
     ###################
