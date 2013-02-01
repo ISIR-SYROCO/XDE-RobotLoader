@@ -48,14 +48,14 @@ def principalframe(M):
     rx = M[0:3, 3:6]/m
 
     position = [rx[2, 1], rx[0, 2], rx[1, 0]]
-    
+
     RSR = M[0:3, 0:3] + m*np.dot(rx, rx)
     [S, R] = eig(RSR)
     if det(R)<0.:
         iI = np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0]])
         R = np.dot(R, iI)
         S = np.dot(iI, np.dot(S, iI))
-    
+
     return lgsm.Displacement(  lgsm.vectord(*position)   , lgsm.Rotation3.fromMatrix(R)  )
 
 
@@ -78,12 +78,12 @@ def RollPitchYaw2Quaternion(roll, pitch, yaw):
     cph,sph = np.cos(roll/2.),  np.sin(roll/2.)
     cth,sth = np.cos(pitch/2.), np.sin(pitch/2.)
     cps,sps = np.cos(yaw/2.),   np.sin(yaw/2.)
-    
+
     q0 = cph*cth*cps + sph*sth*sps
     q1 = sph*cth*cps - cph*sth*sps
     q2 = cph*sth*cps + sph*cth*sps
     q3 = cph*cth*sps - sph*sth*cps
-    
+
     Q = lgsm.Quaternion(q0,q1,q2,q3)
     Q.normalize()
     return Q
@@ -252,7 +252,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
         if robotLinkName in urdfGraphNodes:
             mesh_filename, mesh_position, mesh_scale = urdfGraphNodes[robotLinkName]
             filename, sep, node_in_file = mesh_filename.partition("#")
-            
+
             ###########################
             # add body transform node #
             ###########################
@@ -287,25 +287,22 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
                 Hp_c = lgsm.Displacement(parent_node.position[:]).inverse() * lgsm.Displacement(child_node.position[:])
             else:
                 Hp_c = lgsm.Displacement()
-            
+
 #            ud = Displacement2UrdfPose(Hp_c.inverse())
 #            print child_node.name, ": <origin xyz=\"{} {} {}\" rpy=\"{} {} {}\" />".format(ud.position[0], ud.position[1], ud.position[2], ud.rotation[0], ud.rotation[1], ud.rotation[2])
-            
+
             child_node.ClearField("position")
             child_node.position.extend(Hp_c.tolist())
-            
-            
-            desc.core.printTree(tmp_world.scene.graphical_scene.root_node)
-            desc.core.printTree(urdfWorld.scene.graphical_scene.root_node)
-            
+
+
             mesh_node = desc.simple.graphic.addGraphicalTree(urdfWorld, tmp_world,
                                                             node_name=robotLinkName+"_mesh",                        # name of of mesh in dest world
                                                             dest_parent_node_name=robotLinkName+"_mesh_transform",  # parent node of mesh in dest world
                                                             src_node_name=node_to_copy)                             # name of node to copy in src world
                                                             #ignore_library_conflicts=True)
 
-            
-            
+
+
 #    import dsimi.interactive
 #    dsimi.interactive.shell()()
 
@@ -327,15 +324,15 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
                                                      append_label_nodes = robotName,
                                                      append_label_graph_meshes = robotName )
 
-            
+
 
             ################ CREATE DUMMY TREE to get coll tree-structure: ################
             dummy_world = desc.scene.createWorld(name=robotLinkName+"_coll_mesh")
             transform_gn = desc.graphic.addGraphicalNode(dummy_world.scene.graphical_scene, name=robotLinkName+"_coll_mesh_transform") #, parent_node=robotLinkName+"_coll_mesh")
             desc.graphic.setNodeScale(transform_gn, mesh_scale)
             desc.graphic.setNodePosition(transform_gn, mesh_position)
-            
-            
+
+
             if len(node_in_file) > 0:
                 node_to_copy = node_in_file+robotName
             else:
@@ -351,7 +348,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
 
             child_node.ClearField("position")
             child_node.position.extend(Hp_c.tolist())
-            
+
             mesh_node = desc.simple.graphic.addGraphicalTree(dummy_world, tmp_world,
                                                             node_name=node_to_copy,                           # name of of mesh in dest world
                                                             dest_parent_node_name=robotLinkName+"_coll_mesh_transform",     # parent node of mesh in dest world
@@ -360,8 +357,8 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
 
 
             composite_name = robotLinkName+".comp"
-            
-                
+
+
             createComposite(dummy_world, robotLinkName+"_coll_mesh", composite_name, composite_offset)
             desc.simple.collision.addCompositeMesh(urdfWorld, dummy_world, composite_name, src_node_name=robotLinkName+"_coll_mesh", offset=composite_offset, clean_meshes=True)
 
@@ -392,7 +389,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
             link_material = link.visual.material.name
         else:
             link_material = ""
-        
+
         if hasattr(link.inertial.origin, "position"):
             p   = link.inertial.origin.position
             R   = RollPitchYaw2Quaternion(*link.inertial.origin.rotation)
@@ -404,7 +401,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
             Mc = np.zeros((6,6))
             Mc[0:3, 0:3] = Inertia
             Mc[3:6, 3:6] = m*np.eye(3)
-            
+
             H_c_pf = principalframe(Mc)
             Mpf    = transport(Mc, H_c_pf)
             H_b_c  = lgsm.Displacementd(lgsm.vectord(p), R.inverse())
@@ -452,7 +449,7 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
                 return joint
         return None # if not found
 
-    
+
     def get_visual_and_coll_data(linkName, element, dict_to_fill, simple_shape_def):
         """
         """
@@ -518,7 +515,7 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
         c_name     = joint.child
         assert(p_name in robot.links), p_name+" is not listed in the urdf links..."
         assert(c_name in robot.links), c_name+" is not listed in the urdf links..."
-        
+
         V_p_joint  = joint.origin.position
         A_c_joint  = [float(v) for v in joint.axis.split()] #TODO:PB with parser, it returns a string and not a tuple
         qmin       = joint.limits.lower     if hasattr(joint.limits, "lower")     else -12.
@@ -526,7 +523,7 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
         tau_max    = joint.limits.effort    if hasattr(joint.limits, "effort")    else 10000.
         joint_damp = joint.dynamics.damping if hasattr(joint.dynamics, "damping") else minimal_damping
         qinit      = 0 #TODO: no mean to give init value of q
-        
+
         #Warning, urdf gives axis in child frame (in joint frame, which is the same).
         #We need to transform this vector from child to parent frame coordinates to fit XDE requirement
         R_p_c     = RollPitchYaw2Quaternion(*joint.origin.rotation)
