@@ -27,6 +27,7 @@ clock, phy, graph = xwm.createAllAgents(TIME_STEP)
 
 
 
+import xde_resources as xr
 
 
 #######################################################################################################
@@ -34,27 +35,43 @@ print "START ALL..."
 import desc
 
 
-groundWorld = xrl.createWorldFromUrdfFile("resources/urdf/ground.xml", "ground", [0,0,-0.4, 1, 0, 0, 0], True, 0.1, 0.05) #, "material.concrete")
+groundWorld = xrl.createWorldFromUrdfFile(xr.ground, "ground", [0,0,-0.4, 1, 0, 0, 0], True, 0.1, 0.05) #, "material.concrete")
 xwm.addWorld(groundWorld)
 
 
-kukaWorld = xrl.createWorldFromUrdfFile("resources/urdf/kuka.xml", "k1g", [0,0,-0.0, 0.707,0,  0.707, 0], True, 0.5, 0.01)
+kukaWorld = xrl.createWorldFromUrdfFile(xr.kuka, "kuka", [0,0,-0.0, 0.707,0,  0.707, 0], True, 0.5, 0.01)
+xwm.addMarkers(kukaWorld)
 xrl.addContactLaws(kukaWorld)
 xwm.addWorld(kukaWorld, True)
-kuka = phy.s.GVM.Robot("k1g")
+kuka = phy.s.GVM.Robot("kuka")
 
 
-rx90World = xrl.createWorldFromUrdfFile("resources/urdf/rx90.xml", "rx90", [-0.5,0,0, 1, 0, 0, 0], True, 0.5, 0.01)
+rx90World = xrl.createWorldFromUrdfFile(xr.rx90, "rx90", [-0.5,0,0, 1, 0, 0, 0], True, 0.5, 0.01)
 xwm.addWorld(rx90World, True)
 rx90 = phy.s.GVM.Robot("rx90")
 xwm.addMarkers(rx90World)
 
 
+#dummyWorld = xrl.createWorldFromUrdfFile("resources/urdf/dummy.xml", "dummy", [0,0,.2, 1,0,0,0], True, 0.5, 0.01)
+#xwm.addMarkers(dummyWorld)
+#xrl.addContactLaws(dummyWorld)
+#xwm.addWorld(dummyWorld, True)
+
+#dummy2World = xrl.createWorldFromUrdfFile("resources/urdf/dummy2.xml", "dummy2", [0,0,0, 1,0,0,0], True, 0.5, 0.01)
+#xwm.addMarkers(dummy2World)
+#xrl.addContactLaws(dummy2World)
+#xwm.addWorld(dummy2World, True)
+
+
+#dummy22World = xrl.createWorldFromUrdfFile("resources/urdf/dummy2.xml", "dummy22", [0,0,.5, 1,0,0,0], True, 0.5, 0.01)
+#xwm.addMarkers(dummy22World)
+#xrl.addContactLaws(dummy22World)
+#xwm.addWorld(dummy22World, True)
 
 
 
-kuka.enableContactWithBody("groundground", True)
-rx90.enableContactWithBody("groundground", True)
+kuka.enableContactWithBody("ground.ground", True)
+rx90.enableContactWithBody("ground.ground", True)
 #kuka2.enableContactWithBody("groundground", True)
 ##kuka.enableContactWithRobot("ground", True)
 #kuka.enableContactWithRobot("k2g", True)
@@ -64,8 +81,11 @@ rx90.enableContactWithBody("groundground", True)
 
 
 
-xwm.addInteraction([("groundground", "04k1g"), ("groundground", "05k1g")])
-xwm.removeAllInteractions()
+xwm.addInteraction([("ground.ground", "kuka.04"), ("ground.ground", "kuka.05")])
+#xwm.removeAllInteractions()
+
+xwm.startSimulation()
+
 
 shell()
 

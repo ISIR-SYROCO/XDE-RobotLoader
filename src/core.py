@@ -191,7 +191,7 @@ def addObjectFromDae(graphFileName, objectName, H_init=None, is_fixed_base = Tru
 def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base = True, minimal_damping=0.001, composite_offset=0.001): #TODO: delete defined_mat
     """
     """
-    urdfWorld = desc.scene.createWorld(name=robotName+"root")
+    urdfWorld = desc.scene.createWorld(name=robotName)
     root_node = urdfWorld.scene.graphical_scene.root_node
 
     urdfRobot, urdfNodes, urdfGraphNodes, urdfCollNodes, urdfMatNodes = parse_urdf(urdfFileName, robotName, minimal_damping)
@@ -201,7 +201,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
     # Create kinematic tree and mechanism in physical scene #
     #########################################################
     #print "GET KINEMATIC TREE..."
-    kin_tree = urdfNodes[urdfRobot.get_root()+robotName]
+    kin_tree = urdfNodes[robotName+"."+urdfRobot.get_root()]
 
     if H_init is None:
         H_init = lgsm.Displacementd()
@@ -209,9 +209,9 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
         H_init=lgsm.Displacementd(*H_init)
     root = desc.robot.addKinematicTree(urdfWorld.scene.physical_scene, parent_node=None, tree=kin_tree, fixed_base=is_fixed_base, H_init=H_init)
 
-    urdf_bodies   = [str(v+robotName) for v in  urdfRobot.links.keys()]
+    urdf_bodies   = [str(robotName+"."+v) for v in  urdfRobot.links.keys()]
     urdf_segments = urdf_bodies
-    desc.physic.addMechanism(urdfWorld.scene.physical_scene, robotName, urdfRobot.get_root()+robotName, [], urdf_bodies, urdf_segments)
+    desc.physic.addMechanism(urdfWorld.scene.physical_scene, robotName, robotName+"."+urdfRobot.get_root(), [], urdf_bodies, urdf_segments)
 
 
     #######################################################
@@ -240,7 +240,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
     #print "GET GRAPHICAL TREE..."
     binding_phy_graph = {}
     for link_name in urdfRobot.links.keys():
-        robotLinkName = link_name+robotName
+        robotLinkName = robotName+"."+link_name
         binding_phy_graph[robotLinkName] = robotLinkName
         #################
         # add body node #
@@ -256,14 +256,14 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
             ###########################
             # add body transform node #
             ###########################
-            transform_gn = desc.graphic.addGraphicalNode(urdfWorld.scene.graphical_scene, name=robotLinkName+"_mesh_transform", parent_node=graph_node)
+            transform_gn = desc.graphic.addGraphicalNode(urdfWorld.scene.graphical_scene, name=robotLinkName+".mesh_transform", parent_node=graph_node)
             desc.graphic.setNodeScale(transform_gn, mesh_scale)
             desc.graphic.setNodePosition(transform_gn, mesh_position)
 
             tmp_world = desc.scene.parseColladaFile( filename,
-                                                     append_label_library = robotName,
-                                                     append_label_nodes = robotName,
-                                                     append_label_graph_meshes = robotName )
+                                                     append_label_library = robotLinkName,
+                                                     append_label_nodes = robotLinkName,
+                                                     append_label_graph_meshes = robotLinkName )
 
             if robotLinkName in urdfMatNodes:
                 mat = urdfWorld.library.materials.add()
@@ -274,9 +274,9 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
                 desc.graphic.applyMaterialSet(tmp_world.scene.graphical_scene.root_node, material_set=["xde/YellowOpaqueAvatars", "xde/GreenOpaqueAvatars", "xde/RedOpaqueAvatars"]) #TODO: delete?
 
             if len(node_in_file) > 0:
-                node_to_copy = node_in_file+robotName
+                node_to_copy = node_in_file+robotLinkName
             else:
-                node_to_copy = "root"+robotName
+                node_to_copy = "root"+robotLinkName
 
             ######################
             # add body mesh node #
@@ -296,8 +296,8 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
 
 
             mesh_node = desc.simple.graphic.addGraphicalTree(urdfWorld, tmp_world,
-                                                            node_name=robotLinkName+"_mesh",                        # name of of mesh in dest world
-                                                            dest_parent_node_name=robotLinkName+"_mesh_transform",  # parent node of mesh in dest world
+                                                            node_name=robotLinkName+".mesh",                        # name of of mesh in dest world
+                                                            dest_parent_node_name=robotLinkName+".mesh_transform",  # parent node of mesh in dest world
                                                             src_node_name=node_to_copy)                             # name of node to copy in src world
 
 
@@ -310,29 +310,29 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
     binding_phy_coll = {}
     #for link_name, mesh_filename in urdfCollNodes.items():
     for link_name in urdfRobot.links.keys():
-        robotLinkName = link_name+robotName
+        robotLinkName = robotName+"."+link_name
         if robotLinkName in urdfCollNodes:
             mesh_filename, mesh_position, mesh_scale = urdfCollNodes[robotLinkName]
             filename, sep, node_in_file = mesh_filename.partition("#")
 
             tmp_world = desc.scene.parseColladaFile( filename ,
-                                                     append_label_library = robotName+'coll',
-                                                     append_label_nodes = robotName,
-                                                     append_label_graph_meshes = robotName )
+                                                     append_label_library = robotLinkName,
+                                                     append_label_nodes = robotLinkName,
+                                                     append_label_graph_meshes = robotLinkName )
 
 
 
             ################ CREATE DUMMY TREE to get coll tree-structure: ################
-            dummy_world = desc.scene.createWorld(name=robotLinkName+"_coll_mesh")
-            transform_gn = desc.graphic.addGraphicalNode(dummy_world.scene.graphical_scene, name=robotLinkName+"_coll_mesh_transform") #, parent_node=robotLinkName+"_coll_mesh")
+            dummy_world = desc.scene.createWorld(name=robotLinkName+".coll_mesh")
+            transform_gn = desc.graphic.addGraphicalNode(dummy_world.scene.graphical_scene, name=robotLinkName+".coll_mesh_transform") #, parent_node=robotLinkName+"_coll_mesh")
             desc.graphic.setNodeScale(transform_gn, mesh_scale)
             desc.graphic.setNodePosition(transform_gn, mesh_position)
 
 
             if len(node_in_file) > 0:
-                node_to_copy = node_in_file+robotName
+                node_to_copy = node_in_file+robotLinkName
             else:
-                node_to_copy = "root"+robotName
+                node_to_copy = "root"+robotLinkName
 
             #### add body mesh node ####
             child_node  = desc.core.findInTree(tmp_world.scene.graphical_scene.root_node, node_to_copy)
@@ -347,13 +347,13 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
 
             mesh_node = desc.simple.graphic.addGraphicalTree(dummy_world, tmp_world,
                                                             node_name=node_to_copy,                           # name of of mesh in dest world
-                                                            dest_parent_node_name=robotLinkName+"_coll_mesh_transform",     # parent node of mesh in dest world
+                                                            dest_parent_node_name=robotLinkName+".coll_mesh_transform",     # parent node of mesh in dest world
                                                             src_node_name=node_to_copy)                                     # name of node to copy in src world
             ################ END OF DUMMY TREE ################
             composite_name = robotLinkName+".comp"
 
-            createComposite(dummy_world, robotLinkName+"_coll_mesh", composite_name, composite_offset)
-            desc.simple.collision.addCompositeMesh(urdfWorld, dummy_world, composite_name, src_node_name=robotLinkName+"_coll_mesh", offset=composite_offset, clean_meshes=True)
+            createComposite(dummy_world, robotLinkName+".coll_mesh", composite_name, composite_offset)
+            desc.simple.collision.addCompositeMesh(urdfWorld, dummy_world, composite_name, src_node_name=robotLinkName+".coll_mesh", offset=composite_offset, clean_meshes=True)
 
             binding_phy_coll[robotLinkName] = composite_name
 
@@ -367,7 +367,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
     ###################
     #for link_name in urdfGraphNodes:
     for link_name in urdfRobot.links.keys():
-        robotLinkName = link_name+robotName
+        robotLinkName = robotName+"."+link_name
         createBinding(urdfWorld, robotLinkName, binding_phy_graph[robotLinkName], binding_phy_coll[robotLinkName]) #TODO: put bindings with real collision name.
 
 
@@ -375,7 +375,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
     # Set proper Inertial properties as defined in URDF file, else from collision meshes #
     ######################################################################################
     def setNodeMomentsOfInertia(node):
-        uname = node.rigid_body.name[:-len(robotName)]
+        uname = node.rigid_body.name[len(robotName+"."):]
         link = urdfRobot.links[uname]
         if hasattr(link.visual, "material") and link.visual.material is not None:
             link_material = link.visual.material.name
@@ -404,7 +404,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
             if compNode is not None:
                 desc.physic.computeInertiaParameters(node.rigid_body, urdfWorld.library, compNode)
             else:
-                print "Warning: no inertia set on urdf file for link", uname
+                print "Warning: robot '"+robotName+"', no inertia set on urdf file for link", uname
             #TODO: warn if no collision & no inertia are given in the urdf file
 
     desc.core.visitDepthFirst(setNodeMomentsOfInertia, root)
@@ -433,15 +433,6 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
     ##############################################
     # Functions defined for parsing robot easily #
     ##############################################
-    def get_joint_from_child_link(child_name):
-        """
-        """
-        for j_name, joint in robot.joints.items():
-            if joint.child == child_name:
-                return joint
-        return None # if not found
-
-
     def get_visual_and_coll_data(linkName, element, dict_to_fill, simple_shape_def):
         """
         """
@@ -476,16 +467,10 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
     # the world. We do not care about structure here.
     #
     for l_name, link  in robot.links.items():
-        robotLinkName =  l_name+robotName
+        robotLinkName =  robotName+"."+l_name
         mass = link.inertial.mass
 
-        j_from_child  = get_joint_from_child_link(l_name)
-        if j_from_child is not None:
-            H_parent_body = UrdfPose2Displacement(j_from_child.origin)
-        else:
-            H_parent_body = lgsm.Displacementd()
-
-        phy_nodes[robotLinkName] = [robotLinkName, mass, H_parent_body, [], []] # create a node for the XDE kinematic tree in dict phy_nodes
+        phy_nodes[robotLinkName] = [robotLinkName, mass, lgsm.Displacementd(), [], []] # create a node for the XDE kinematic tree in dict phy_nodes
 
         get_visual_and_coll_data(robotLinkName, link.visual,    graph_nodes, "high") # fill dict graph_nodes (which bodies has visual)
         get_visual_and_coll_data(robotLinkName, link.collision, coll_nodes,  "low")  # fill dict coll_nodes  (which bodies has collision)
@@ -505,8 +490,8 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
     for j_name, joint in robot.joints.items():
         p_name     = joint.parent
         c_name     = joint.child
-        assert(p_name in robot.links), p_name+" is not listed in the urdf links..."
-        assert(c_name in robot.links), c_name+" is not listed in the urdf links..."
+        assert(p_name in robot.links), p_name+" is not listed in the urdf links in "+urdfFileName
+        assert(c_name in robot.links), c_name+" is not listed in the urdf links in "+urdfFileName
 
         V_p_joint  = joint.origin.position
         A_c_joint  = [float(v) for v in joint.axis.split()] #TODO:PB with parser, it returns a string and not a tuple
@@ -521,18 +506,19 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
         R_p_c     = RollPitchYaw2Quaternion(*joint.origin.rotation)
         A_p_joint = R_p_c * A_c_joint
         A_p_joint.resize(3)
-        #A_p_joint = [round(v, 10) for v in A_p_joint] TODO: useless I suppose
 
 
         #possible urdf joint type = {"revolute","continuous","prismatic","fixed", "planar", "floating (deprecated)"}
         if joint.joint_type in ["revolute", "prismatic"]:
             jType = "hinge" if joint.joint_type == "revolute" else "prismatic"
-            phy_nodes[c_name+robotName][3].append(  (jType, V_p_joint, A_p_joint, joint_damp, qmin, qmax, qinit)   )
-            phy_nodes[p_name+robotName][4].append(phy_nodes[c_name+robotName])
+            phy_nodes[robotName+"."+c_name][2] = UrdfPose2Displacement(joint.origin)
+            phy_nodes[robotName+"."+c_name][3].append(  (jType, V_p_joint, A_p_joint, joint_damp, qmin, qmax, qinit)   )
+            phy_nodes[robotName+"."+p_name][4].append(phy_nodes[robotName+"."+c_name])
         elif joint.joint_type == "fixed":
             raise ValueError(" more test needed before using this type of joint")
-            phy_nodes[c_name+robotName][3].append( [] )
-            phy_nodes[p_name+robotName][4].append(phy_nodes[c_name+robotName])
+            phy_nodes[robotName+"."+c_name][2] = UrdfPose2Displacement(joint.origin)
+            phy_nodes[robotName+"."+c_name][3].append( [] )
+            phy_nodes[robotName+"."+p_name][4].append(phy_nodes[robotName+"."+c_name])
         elif joint.joint_type in ["continuous", "planar", "floating"]:
             raise ValueError("joint type '"+joint.joint_type+"' is in urdf convention, but it is not managed with this loader...")
         else:
