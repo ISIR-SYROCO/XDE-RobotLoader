@@ -102,7 +102,10 @@ def Quaternion2RollPitchYaw(Q):
 
 
 def UrdfPose2Displacement(urdfPose):
-    return lgsm.Displacement(lgsm.vector(urdfPose.position) ,RollPitchYaw2Quaternion(*urdfPose.rotation))
+    if urdfPose is not None:
+        return lgsm.Displacement(lgsm.vector(urdfPose.position) ,RollPitchYaw2Quaternion(*urdfPose.rotation))
+    else:
+        return lgsm.Displacement()
 
 
 def Displacement2UrdfPose(H):
@@ -475,7 +478,7 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
         get_visual_and_coll_data(robotLinkName, link.visual,    graph_nodes, "high") # fill dict graph_nodes (which bodies has visual)
         get_visual_and_coll_data(robotLinkName, link.collision, coll_nodes,  "low")  # fill dict coll_nodes  (which bodies has collision)
 
-        if hasattr(link.visual, "material") and link.visual.material.color is not None: # save color, if any
+        if (link.visual is not None) and (link.visual.material is not None) and (link.visual.material.color is not None): # save color, if any
                 material_nodes[robotLinkName] = link.visual.material.color.rgba
 
 
