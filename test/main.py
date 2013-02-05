@@ -50,6 +50,13 @@ wm.addWorld(rx90World, True)
 rx90 = wm.phy.s.GVM.Robot("rx90")
 wm.addMarkers(rx90World)
 
+dummyWorld = xrl.createWorldFromUrdfFile("resources/urdf/dummy2.xml", "dummy", [0,0,.5, 1, 0, 0, 0], True, 0.5, 0.01)
+wm.addWorld(dummyWorld, True)
+dummy = wm.phy.s.GVM.Robot("dummy")
+wm.addMarkers(dummyWorld)
+
+
+dummy.enableContactWithBody("ground.ground", True)
 
 
 
