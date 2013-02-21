@@ -24,7 +24,7 @@ TIME_STEP = .01
 
 import xde_robot_loader as xrl
 wm = xwm.WorldManager()
-wm.createAllAgents(TIME_STEP, "physic",  create_graphic=True, graph_name = "graphic")
+wm.createAllAgents(TIME_STEP, phy_name="physic",  create_graphic=True, graph_name = "graphic")
 
 import xde_resources as xr
 
