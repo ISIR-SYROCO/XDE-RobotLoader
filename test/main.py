@@ -41,17 +41,17 @@ kukaWorld = xrl.createWorldFromUrdfFile(xr.kuka, "kuka", [0,0,-0.0, 0.707,0,  0.
 wm.addMarkers(kukaWorld)
 xrl.addContactLaws(kukaWorld)
 
-wm.addWorld(kukaWorld, True)
+wm.addWorld(kukaWorld)
 kuka = wm.phy.s.GVM.Robot("kuka")
 
 
 rx90World = xrl.createWorldFromUrdfFile(xr.rx90, "rx90", [-0.5,0,0, 1, 0, 0, 0], True, 0.5, 0.01)
-wm.addWorld(rx90World, True)
+wm.addWorld(rx90World)
 rx90 = wm.phy.s.GVM.Robot("rx90")
 wm.addMarkers(rx90World)
 
 dummyWorld = xrl.createWorldFromUrdfFile("resources/urdf/dummy2.xml", "dummy", [0,0,.5, 1, 0, 0, 0], True, 0.5, 0.01)
-wm.addWorld(dummyWorld, True)
+wm.addWorld(dummyWorld,)
 dummy = wm.phy.s.GVM.Robot("dummy")
 wm.addMarkers(dummyWorld)
 
@@ -66,7 +66,7 @@ rx90.enableContactWithBody("ground.ground", True)
 wm.addInteraction([("ground.ground", "kuka.04"), ("ground.ground", "kuka.05")])
 #wm.removeAllInteractions()
 
-wm.startSimulation()
+wm.startAgents()
 
 
 shell()

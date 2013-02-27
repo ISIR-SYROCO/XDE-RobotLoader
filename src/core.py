@@ -151,7 +151,7 @@ def getParentNode(root_node, node_name):
 
 import desc.simple.scene
 import desc.simple.physic
-def addObjectFromDae(graphFileName, objectName, H_init=None, is_fixed_base = True, collFileName=None, composite_offset=0.001, mass=1., moments_of_inertia=None, H_inertia_segment=None, material_name="material.concrete"):
+def addObjectFromDae(graphFileName, objectName, H_init=None, is_fixed_base = True, canCollide=True, collFileName=None, composite_offset=0.001, scale=1., mass=1., moments_of_inertia=None, H_inertia_segment=None, material_name="material.metal"):
 
     ##### CREATE WORLD & FILL GRAPHICAL TREE
     object_world = desc.simple.scene.parseColladaFile(graphFileName,
@@ -159,13 +159,28 @@ def addObjectFromDae(graphFileName, objectName, H_init=None, is_fixed_base = Tru
                                                         append_label_nodes = objectName,
                                                         append_label_graph_meshes = objectName)
 
-    ##### FILL COLLISION TREE
-    compositeName = objectName+".comp"
-    if collFileName is not None:
-        coll_object_world = desc.simple.scene.parseColladaFile(collFileName, append_label_library="_"+objectName+".collision")
+    object_world.scene.graphical_scene.root_node.ClearField("scale")
+    if hasattr(scale, "__iter__") and len(scale) == 3:
+        object_world.scene.graphical_scene.root_node.scale.extend(scale)
     else:
-        coll_object_world = object_world
-    desc.simple.collision.addCompositeMesh(object_world, coll_object_world, composite_name=compositeName, offset=composite_offset, clean_meshes=True)
+        object_world.scene.graphical_scene.root_node.scale.extend([scale]*3)
+
+    ##### FILL COLLISION TREE
+    compositeName = ""
+    if canCollide is True:
+        compositeName = objectName+".comp"
+        if collFileName is not None:
+            coll_object_world = desc.simple.scene.parseColladaFile(collFileName, append_label_library="_"+objectName+".collision")
+        else:
+            coll_object_world = object_world
+        desc.simple.collision.addCompositeMesh(object_world, coll_object_world, composite_name=compositeName, offset=composite_offset, clean_meshes=True)
+        
+        object_world.scene.collision_scene.meshes[0].root_node.ClearField("scale")
+        if hasattr(scale, "__iter__") and len(scale) == 3:
+            object_world.scene.collision_scene.meshes[0].root_node.scale.extend(scale)
+        else:
+            object_world.scene.collision_scene.meshes[0].root_node.scale.extend([scale]*3)
+        
 
     ##### FILL PHYSICAL TREE
     node = desc.simple.physic.addRigidBody(object_world, objectName)
