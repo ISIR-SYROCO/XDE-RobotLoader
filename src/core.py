@@ -4,8 +4,12 @@ import desc.scene
 import desc.material
 import desc.graphic
 import desc.core
+import desc.simple.scene
+import desc.simple.physic
 import desc.simple.graphic
 import desc.simple.collision
+
+
 
 import lgsm
 import numpy as np
@@ -18,30 +22,13 @@ import urdf
 
 
 ################################################################################
-def transport(M, H):
-    """Transport (express) the mass matrix into another frame.
-
-    :param M: the mass matrix expressed in the original frame (say, `a`)
-    :type M: (6,6)-shaped array
-    :param H: homogeneous matrix from the new frame (say `b`) to the
-              original one: `H_{ab}`
-    :type H: (4,4)-shaped array
-    :rtype: (6,6)-shaped array
-    """
-    Ad = H.adjoint()
-    return np.dot(Ad.T, np.dot(M, Ad))
-
-
 
 def principalframe(M):
-    """Find the principal frame of inertia of a mass matrix.
+    """ Find the principal frame of inertia of a mass matrix.
 
-    :param M: mass matrix expressed in any frame (say `a`)
-    :type M: (6,6)-shaped array
-    :rtype: (4,4)-shaped array
+    :param M: a (6x6) mass matrix expressed in any frame (say `a`)
 
-    Returns the homogeneous matrix `H_{am}` to the principal inertia
-    frame `m`
+    :rtype: a lgsm.Displacement representing `H_{am}` from `a` to the principal inertia frame `m`
     """
     from numpy.linalg import eig, det
     m = M[5, 5]
@@ -56,24 +43,19 @@ def principalframe(M):
         R = np.dot(R, iI)
         S = np.dot(iI, np.dot(S, iI))
 
-    return lgsm.Displacement(  lgsm.vectord(*position)   , lgsm.Rotation3.fromMatrix(R)  )
+    return lgsm.Displacement(  lgsm.vectord(*position), lgsm.Rotation3.fromMatrix(R)  )
 
-
-
-
-def vec2SkewMatrix(vec):
-    """
-    """
-    assert(len(vec) == 3)
-    skm = np.array([[0      ,-vec[2], vec[1]],
-                    [ vec[2], 0     ,-vec[0]],
-                    [-vec[1], vec[0], 0     ]])
-    return skm
 
 
 
 def RollPitchYaw2Quaternion(roll, pitch, yaw):
-    """ Give the Quaternion coresponding to the roll,pitch,yaw rotation
+    """ Give the Quaternion coresponding to the (roll,pitch,yaw) rotation
+    
+    :param roll: a double which represents the roll angle
+    :param pitch: a double which represents the pitch angle
+    :param yaw: a double which represents the yaw angle
+    
+    :rtype: return a lgsm.Quaternion representing this rotation
     """
     cph,sph = np.cos(roll/2.),  np.sin(roll/2.)
     cth,sth = np.cos(pitch/2.), np.sin(pitch/2.)
@@ -91,7 +73,13 @@ def RollPitchYaw2Quaternion(roll, pitch, yaw):
 
 
 def Quaternion2RollPitchYaw(Q):
-    """
+    """ Give the (roll,pitch,yaw) rotation coresponding to the Quaternion
+    
+    :param Q: the lgsm.Quaternion one wants to convert
+    
+    :rtype: a 3-list corresponding to the [roll, pitch, yaw] rotation
+    
+    :warning: it seems that some conversion problems occur when pitch = +|- pi/2
     """
     q0, q1, q2, q3 = Q
     rpy = [ np.arctan2(2*(q0*q1 + q2*q3), 1 - 2*(q1**2 + q2**2)),
@@ -102,6 +90,12 @@ def Quaternion2RollPitchYaw(Q):
 
 
 def UrdfPose2Displacement(urdfPose):
+    """ Convert a pose from urdf file into a displacement
+    
+    :param urdfPose: a urdf.Pose
+    
+    :rtype: a lgsm.Displacement
+    """
     if urdfPose is not None:
         return lgsm.Displacement(lgsm.vector(urdfPose.position) ,RollPitchYaw2Quaternion(*urdfPose.rotation))
     else:
@@ -109,21 +103,39 @@ def UrdfPose2Displacement(urdfPose):
 
 
 def Displacement2UrdfPose(H):
+    """ Convert a displacement into a pose from urdf file
+    
+    :param urdfPose: a lgsm.Displacement
+    
+    :rtype: a urdf.Pose
+    """
     return urdf.Pose([H.x, H.y, H.z], Quaternion2RollPitchYaw(H.getRotation()))
 
 
-def createBinding(world, phy_name, graph_node_name, comp_name):
+def createBinding(world, phy_name, graph_name, comp_name):
+    """ Create binding between physical, graphical & collision scenes.
+    
+    :param world: a scene_pb2.World where the binding is set
+    :param phy_name: the name of the physical node
+    :param graph_name: the name of the graphical node
+    :param comp_name: the name of the composite (collision) name
+    
+    :warning: this method changes the name of the graph node into phy_name
     """
-    """
-    graph_node      = desc.core.findInTree(world.scene.graphical_scene.root_node, graph_node_name)
+    graph_node      = desc.core.findInTree(world.scene.graphical_scene.root_node, graph_name)
     graph_node.name = phy_name # it is suitable to have the same name for both graphics and physics.
     desc.scene.addBinding(world, phy_name, phy_name, "", comp_name)
 
 
-def createComposite(world, graph_node_name, composite_name, offset):
+def createComposite(world, graph_name, composite_name, offset):
+    """ Create a composite node copied from a graphical node
+    
+    :param world: a scene_pb2.World where the graph node is, and where the composite will be created
+    :param graph_name: the name of the graphical node
+    :param composite_name: the name of the new composite node
+    :param offset: the thickness dimension which covers the composite mesh
     """
-    """
-    graph_node = desc.core.findInTree(world.scene.graphical_scene.root_node, graph_node_name)
+    graph_node = desc.core.findInTree(world.scene.graphical_scene.root_node, graph_name)
     composite  = desc.collision.addCompositeMesh(world.scene.collision_scene, composite_name, offset=offset)
     desc.collision.copyFromGraphicalTree(composite.root_node, graph_node)
     composite.root_node.ClearField("position")
@@ -149,12 +161,42 @@ def getParentNode(root_node, node_name):
 
 
 
-import desc.simple.scene
-import desc.simple.physic
-def addObjectFromDae(graphFileName, objectName, H_init=None, is_fixed_base = True, canCollide=True, collFileName=None, composite_offset=0.001, scale=1., mass=1., moments_of_inertia=None, H_inertia_segment=None, material_name="material.metal"):
+
+
+
+
+############################################################################
+#                                                                          #
+# Methods that transform dae or urdf files into scene_pb2.World instances, #
+# which can be loaded into XDE with the physic.deserializeWorld, or with   #
+# the XDE-WorldManager.                                                    #
+#                                                                          #
+############################################################################
+
+#TODO: should be renamed to createWorldFromDae??
+def addObjectFromDae(daeFileName, objectName, H_init=None, is_fixed_base = True, can_collide=True, collFileName=None, composite_offset=0.001, scale=1., mass=1., moments_of_inertia=None, H_inertia_segment=None, material_name="material.metal"):
+    """ Create a world from a simple object described in a dae file.
+    
+    It does not create a robot (a kinematic tree-structure) but a simple body through
+    a physical node, a graphical node and a composite (collision) node.
+    
+    :param daeFileName: the dae file path to convert
+    :param objectName: the name of the physical node
+    :param H_init: the initial pose (lgsm.Displacement) of the object in scene; by  default lgsm.Displacement(0,0,0)
+    :param can_collide: True if it collide in the physical scene, or False if it is just a decoration
+    :param collFileName: the dae file path if collision mesh is in another dae, else it is the daeFileName
+    :param composite_offset: the thickness dimension which covers the composite mesh
+    :param scale: the scale of the mesh, can be a float or a 3-list
+    :param mass: the mass of the physical object
+    :param moments_of_inertia: the moments of inertia of the object
+    :param H_inertia_segment: the lgsm.Displacement from the object frame to the inertial principal frame
+    :param material_name: the material name, used in the definition of frictional interaction
+    
+    :rtype: a scene_pb2.World with one physical/graphical/composite node
+    """
 
     ##### CREATE WORLD & FILL GRAPHICAL TREE
-    object_world = desc.simple.scene.parseColladaFile(graphFileName,
+    object_world = desc.simple.scene.parseColladaFile(daeFileName,
                                                         append_label_library = objectName,
                                                         append_label_nodes = objectName,
                                                         append_label_graph_meshes = objectName)
@@ -207,7 +249,24 @@ def addObjectFromDae(graphFileName, objectName, H_init=None, is_fixed_base = Tru
 
 
 def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base = True, minimal_damping=0.001, composite_offset=0.001): #TODO: delete defined_mat
-    """
+    """ Create a world from a kinematic tree-structure described in an urdf file.
+    
+    It creates a kinematic tree-structure by parsing an urdf file, which describes
+    the whole data about physic, kinematic, graphic and collision.
+    For more information, see: `http://www.ros.org/wiki/urdf/XML/model`
+    
+    :param urdfFileName: the urdf file path which describes the robot
+    :param robotName: the robot name given in this world
+    :param H_init: the initial pose (lgsm.Displacement) of the object in scene; by  default lgsm.Displacement(0,0,0)
+    :param is_fixed_base: True if the robot is rigidly linked to the ground, False if it has a free-flying root
+    :param minimal_damping: the minimal articular damping. Should NOT be null, because it seems to block the simulation
+    :param composite_offset: the thickness dimension which covers the robto composite meshes
+    
+    :rtype: a scene_pb2.World that contains the robot
+    
+    In this created world, the robot is named 'robotName', and robot components are prefixed with 'robotName+.'
+    For instance, if segments are 'seg01', 'seg02', ... in urdf file, and we create a robot 'johnny5'
+    they can be found in the GVM scene with the names: 'johnny5.seg01', 'johnny5.seg02', etc...
     """
     urdfWorld = desc.scene.createWorld(name=robotName)
     root_node = urdfWorld.scene.graphical_scene.root_node
@@ -306,12 +365,8 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
             else:
                 Hp_c = lgsm.Displacement()
 
-#            ud = Displacement2UrdfPose(Hp_c.inverse())
-#            print child_node.name, ": <origin xyz=\"{} {} {}\" rpy=\"{} {} {}\" />".format(ud.position[0], ud.position[1], ud.position[2], ud.rotation[0], ud.rotation[1], ud.rotation[2])
-
             child_node.ClearField("position")
             child_node.position.extend(Hp_c.tolist())
-
 
             mesh_node = desc.simple.graphic.addGraphicalTree(urdfWorld, tmp_world,
                                                             node_name=robotLinkName+".mesh",                        # name of of mesh in dest world
@@ -413,7 +468,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
             Mc[3:6, 3:6] = m*np.eye(3)
 
             H_c_pf = principalframe(Mc)
-            Mpf    = transport(Mc, H_c_pf)
+            Mpf    = H_c_pf.adjoint().transpose() * Mc * H_c_pf.adjoint()  #transport(Mc, H_c_pf)
             H_b_c  = lgsm.Displacementd(lgsm.vectord(p), R.inverse())
             H_b_pf = H_b_c * H_c_pf
             desc.physic.fillRigidBody(node.rigid_body,  mass=m, moments_of_inertia=[Mpf[0,0], Mpf[1,1], Mpf[2,2]], H_inertia_segment=H_b_c, contact_material=link_material)
@@ -435,10 +490,18 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
 
 
 
-simple_shapes_dae = os.path.dirname(__file__) + os.sep + "simple_shapes.dae" # Dont really know where to place it
+def get_simple_shapes_dae():
+    """ Get the dae file path of the simple shapes, box, sphere, cylinder """
+    return os.path.dirname(__file__) + os.sep + "simple_shapes.dae"
+
+
 
 def parse_urdf(urdfFileName, robotName, minimal_damping):
-    """
+    """ Parse a urdf file to obtain usefull information for XDE.
+    
+    :param urdfFileName: the urdf file path
+    :param robotName: the robot name, mainly to rename urdf components with the convention 'robotName.compName'
+    :param minimal_damping: if not given in urdf file, minimal damping. Should NOT be zero to avoid any blocking simulation
     """
     robot = urdf.URDF.load_xml_file(urdfFileName)
 
@@ -468,13 +531,13 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
                         raise ValueError, "Cannot interpret scale '"+element.geometry.scale+"' of link '"+linkName+"' correctly"
                 dict_to_fill[linkName] =  [str(os.path.dirname(urdfFileName) + os.sep + element.geometry.filename), mesh_origin, mesh_scale ]
             elif isinstance(element.geometry, urdf.Box):
-                dict_to_fill[linkName] = [simple_shapes_dae + "#simple_shape_box", mesh_origin, element.geometry.dims ]
+                dict_to_fill[linkName] = [get_simple_shapes_dae() + "#simple_shape_box", mesh_origin, element.geometry.dims ]
             elif isinstance(element.geometry, urdf.Sphere):
                 radius = element.geometry.radius
-                dict_to_fill[linkName] = [simple_shapes_dae + "#simple_shape_sphere_"+simple_shape_def, mesh_origin, (radius,radius,radius)]
+                dict_to_fill[linkName] = [get_simple_shapes_dae() + "#simple_shape_sphere_"+simple_shape_def, mesh_origin, (radius,radius,radius)]
             elif isinstance(element.geometry, urdf.Cylinder):
                 length, radius = element.geometry.length, element.geometry.radius
-                dict_to_fill[linkName] = [simple_shapes_dae + "#simple_shape_cylinder_"+simple_shape_def, mesh_origin, (radius,radius,length) ]
+                dict_to_fill[linkName] = [get_simple_shapes_dae() + "#simple_shape_cylinder_"+simple_shape_def, mesh_origin, (radius,radius,length) ]
 
 
     ############################################
@@ -556,6 +619,8 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
 
 
 ################################################################################
+#TODO: this function should be deleted, it is the role of the WorldManager, or directly
+#      the physic to define these contact laws
 def addContactLaws(world):
     """
     """
