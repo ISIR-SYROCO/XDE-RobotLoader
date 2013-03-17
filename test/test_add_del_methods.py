@@ -41,29 +41,34 @@ wm.addMarkers(kukaWorld)
 wm.addWorld(kukaWorld)
 kuka = wm.phy.s.GVM.Robot("kuka")
 
-
-rx90World = xrl.createWorldFromUrdfFile(xr.rx90, "rx90", [-0.5,0,0, 1, 0, 0, 0], True, 0.5, 0.01)
-wm.addWorld(rx90World)
-rx90 = wm.phy.s.GVM.Robot("rx90")
-wm.addMarkers(rx90World)
-
-dummyWorld = xrl.createWorldFromUrdfFile("resources/urdf/dummy2.xml", "dummy", [0,0,.5, 1, 0, 0, 0], True, 0.5, 0.01)
-wm.addWorld(dummyWorld,)
-dummy = wm.phy.s.GVM.Robot("dummy")
-wm.addMarkers(dummyWorld)
-
-
 wm.ms.setContactLawForMaterialPair("material.metal", "material.concrete", 1, 1.0)
 
-dummy.enableContactWithBody("ground.ground", True)
 kuka.enableContactWithBody("ground.ground", True)
-rx90.enableContactWithBody("ground.ground", True)
 
-wm.addInteraction([("ground.ground", "kuka.04"), ("ground.ground", "kuka.05")])
+#for interactions:
+wm.addInteraction([("kuka.04", "ground.ground"), ("kuka.05", "ground.ground")])
+wm.removeInteraction([("kuka.04", "ground.ground"), ("kuka.05", "ground.ground")])
+wm.addInteraction([("kuka.04", "ground.ground"), ("kuka.05", "ground.ground")])
+wm.removeAllInteractions()
+wm.removeAllInteractions() # test if it doesn't crash if one tryieds to remove in void scene
+wm.addInteraction([("kuka.04", "ground.ground"), ("kuka.05", "ground.ground")])
+wm.removeInteraction([("kuka.06", "ground.ground")])   #no problem if removing non-added interaction
+
+
+#for markers:
+wm.addMarkers(kukaWorld)
+wm.removeMarkers(kukaWorld)
+wm.addMarkers(kukaWorld, ["kuka.03", "kuka.04", "kuka.05"], False)
+wm.removeMarkers(kukaWorld, ["kuka.05"])
+wm.removeMarkers(kukaWorld, ["kuka.05"]) #just a warning if marker does not exist
+
+
+#wm.removeWorld(kukaWorld) #WARNING: PROBLEM IF DELETE WORLD WITH INTERACTIONS OR MARKERS DISPLAYED
+#wm.addWorld(kukaWorld)
 
 wm.startAgents()
 
-
 shell()
+
 
 
