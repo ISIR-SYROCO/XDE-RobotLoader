@@ -173,8 +173,7 @@ def getParentNode(root_node, node_name):
 #                                                                          #
 ############################################################################
 
-#TODO: should be renamed to createWorldFromDae??
-def addObjectFromDae(daeFileName, objectName, H_init=None, is_fixed_base = True, can_collide=True, collFileName=None, composite_offset=0.001, scale=1., mass=1., moments_of_inertia=None, H_inertia_segment=None, material_name="material.metal"):
+def createWorldFromDae(daeFileName, objectName, H_init=None, is_fixed_base = True, can_collide=True, collFileName=None, composite_offset=0.001, scale=1., mass=1., moments_of_inertia=None, H_inertia_segment=None, material_name="material.metal"):
     """ Create a world from a simple object described in a dae file.
     
     It does not create a robot (a kinematic tree-structure) but a simple body through
@@ -209,7 +208,7 @@ def addObjectFromDae(daeFileName, objectName, H_init=None, is_fixed_base = True,
 
     ##### FILL COLLISION TREE
     compositeName = ""
-    if canCollide is True:
+    if can_collide is True:
         compositeName = objectName+".comp"
         if collFileName is not None:
             coll_object_world = desc.simple.scene.parseColladaFile(collFileName, append_label_library="_"+objectName+".collision")
@@ -610,30 +609,5 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
 
 
 
-
-
-
-
-
-
-
-
-################################################################################
-#TODO: this function should be deleted, it is the role of the WorldManager, or directly
-#      the physic to define these contact laws
-def addContactLaws(world):
-    """
-    """
-    cl = world.scene.physical_scene.contact_laws.add()
-    cl.material_i = "material.metal"
-    cl.material_j = "material.concrete"
-    cl.law = cl.COULOMB
-    cl.friction = 0.5
-
-    cl = world.scene.physical_scene.contact_laws.add()
-    cl.material_i = "material.metal"
-    cl.material_j = "material.metal"
-    cl.law = cl.COULOMB
-    cl.friction = 0.5
 
 
