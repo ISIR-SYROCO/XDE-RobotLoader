@@ -18,5 +18,10 @@ Create a symlink to `./XDE-RobotLoader/src` in `prefix` directory:
 
 `python setup.py develop [--prefix=PREFIX] [--uninstall]`
 
+Build Documentation:
+--------------------
+
+`runxde.sh setup.py build_doc [--build-dir=BUILD_DIR] [-b TARGET_BUILD]`
+
 
 [1]: http://www.ros.org/wiki/urdf
