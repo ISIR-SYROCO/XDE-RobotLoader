@@ -468,7 +468,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
 
             H_c_pf = principalframe(Mc)
             Mpf    = H_c_pf.adjoint().transpose() * Mc * H_c_pf.adjoint()  #transport(Mc, H_c_pf)
-            H_b_c  = lgsm.Displacementd(lgsm.vectord(p), R.inverse())
+            H_b_c  = lgsm.Displacementd(lgsm.vectord(p), R)
             H_b_pf = H_b_c * H_c_pf
             desc.physic.fillRigidBody(node.rigid_body,  mass=m, moments_of_inertia=[Mpf[0,0], Mpf[1,1], Mpf[2,2]], H_inertia_segment=H_b_c, contact_material=link_material)
         else:
