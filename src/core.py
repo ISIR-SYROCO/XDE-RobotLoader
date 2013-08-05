@@ -1,5 +1,5 @@
 
-import desc.robot
+import desc.physic
 import desc.scene
 import desc.material
 import desc.graphic
@@ -43,7 +43,10 @@ def principalframe(M):
         R = np.dot(R, iI)
         S = np.dot(iI, np.dot(S, iI))
 
-    return lgsm.Displacement(  lgsm.vectord(*position), lgsm.Rotation3.fromMatrix(R)  )
+    result = lgsm.Displacement()
+    result.setTranslation(lgsm.vectord(*position))
+    result.setRotation(lgsm.Rotation3.fromMatrix(R))
+    return result
 
 
 
@@ -97,7 +100,10 @@ def UrdfPose2Displacement(urdfPose):
     :rtype: a lgsm.Displacement
     """
     if urdfPose is not None:
-        return lgsm.Displacement(lgsm.vector(urdfPose.position) ,RollPitchYaw2Quaternion(*urdfPose.rotation))
+        result = lgsm.Displacement()
+        result.setTranslation(lgsm.vector(urdfPose.position))
+        result.setRotation(RollPitchYaw2Quaternion(*urdfPose.rotation))
+        return result
     else:
         return lgsm.Displacement()
 
@@ -123,8 +129,11 @@ def createBinding(world, phy_name, graph_name, comp_name):
     :warning: this method changes the name of the graph node into phy_name
     """
     graph_node      = desc.core.findInTree(world.scene.graphical_scene.root_node, graph_name)
+    phy_node        = desc.physic.findInPhysicalScene(world.scene.physical_scene, phy_name)
     graph_node.name = phy_name # it is suitable to have the same name for both graphics and physics.
-    desc.scene.addBinding(world, phy_name, phy_name, "", comp_name)
+    print graph_node.name
+    #desc.scene.addBinding(world, phy_name, phy_name, "", comp_name)
+    desc.physic.fillRigidBody(phy_node.rigid_body, composite_name=comp_name)
 
 
 def createComposite(world, graph_name, composite_name, offset):
@@ -136,7 +145,7 @@ def createComposite(world, graph_name, composite_name, offset):
     :param offset: the thickness dimension which covers the composite mesh
     """
     graph_node = desc.core.findInTree(world.scene.graphical_scene.root_node, graph_name)
-    composite  = desc.collision.addCompositeMesh(world.scene.collision_scene, composite_name, offset=offset)
+    composite  = desc.collision.addCompositeMesh(world.scene.physical_scene.collision_scene, composite_name, offset=offset)
     desc.collision.copyFromGraphicalTree(composite.root_node, graph_node)
     composite.root_node.ClearField("position")
     composite.root_node.position.extend([0,0,0,1,0,0,0])
@@ -272,22 +281,6 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
 
     urdfRobot, urdfNodes, urdfGraphNodes, urdfCollNodes, urdfMatNodes = parse_urdf(urdfFileName, robotName, minimal_damping)
 
-
-    #########################################################
-    # Create kinematic tree and mechanism in physical scene #
-    #########################################################
-    #print "GET KINEMATIC TREE..."
-    kin_tree = urdfNodes[robotName+"."+urdfRobot.get_root()]
-
-    if H_init is None:
-        H_init = lgsm.Displacementd()
-    if isinstance(H_init, list) or isinstance(H_init, tuple):
-        H_init=lgsm.Displacementd(*H_init)
-    root = desc.robot.addKinematicTree(urdfWorld.scene.physical_scene, parent_node=None, tree=kin_tree, fixed_base=is_fixed_base, H_init=H_init)
-
-    urdf_bodies   = [str(robotName+"."+v) for v in  urdfRobot.links.keys()]
-    urdf_segments = urdf_bodies
-    desc.physic.addMechanism(urdfWorld.scene.physical_scene, robotName, robotName+"."+urdfRobot.get_root(), [], urdf_bodies, urdf_segments)
 
 
     #######################################################
@@ -432,16 +425,22 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
         else:
             binding_phy_coll[robotLinkName] = ""
 
+    #########################################################
+    # Create kinematic tree and mechanism in physical scene #
+    #########################################################
+    #print "GET KINEMATIC TREE..."
+    kin_tree = urdfNodes[robotName+"."+urdfRobot.get_root()]
 
+    if H_init is None:
+        H_init = lgsm.Displacementd()
+    if isinstance(H_init, list) or isinstance(H_init, tuple):
+        H_init=lgsm.Displacementd(*H_init)
+    desc.physic.fillKinematicTree(urdfWorld.scene.physical_scene.nodes.add(), tree=kin_tree, fixed_base=is_fixed_base, H_init=H_init, composites=binding_phy_coll)
 
-    ###################
-    # Create bindings #
-    ###################
-    #for link_name in urdfGraphNodes:
-    for link_name in urdfRobot.links.keys():
-        robotLinkName = robotName+"."+link_name
-        createBinding(urdfWorld, robotLinkName, binding_phy_graph[robotLinkName], binding_phy_coll[robotLinkName]) #TODO: put bindings with real collision name.
-
+    
+    urdf_bodies   = [str(robotName+"."+v) for v in  urdfRobot.links.keys()]
+    urdf_segments = urdf_bodies
+    desc.physic.addMechanism(urdfWorld.scene.physical_scene, robotName, robotName+"."+urdfRobot.get_root(), [], urdf_bodies, urdf_segments)
 
     ######################################################################################
     # Set proper Inertial properties as defined in URDF file, else from collision meshes #
@@ -468,7 +467,9 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
 
             H_c_pf = principalframe(Mc)
             Mpf    = H_c_pf.adjoint().transpose() * Mc * H_c_pf.adjoint()  #transport(Mc, H_c_pf)
-            H_b_c  = lgsm.Displacementd(lgsm.vectord(p), R)
+            H_b_c  = lgsm.Displacementd()
+            H_b_c.setTranslation(lgsm.vectord(p))
+            H_b_c.setRotation(R)
             H_b_pf = H_b_c * H_c_pf
             desc.physic.fillRigidBody(node.rigid_body,  mass=m, moments_of_inertia=[Mpf[0,0], Mpf[1,1], Mpf[2,2]], H_inertia_segment=H_b_c, contact_material=link_material)
         else:
@@ -478,8 +479,20 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
             else:
                 print "Warning: robot '"+robotName+"', no inertia set on urdf file for link", uname
             #TODO: warn if no collision & no inertia are given in the urdf file
-
+    root = desc.physic.findInPhysicalScene(urdfWorld.scene.physical_scene, robotName+"."+urdfRobot.get_root())
     desc.core.visitDepthFirst(setNodeMomentsOfInertia, root)
+
+
+    ###################
+    # Create bindings #
+    ###################
+    #for link_name in urdfGraphNodes:
+    for link_name in urdfRobot.links.keys():
+        robotLinkName = robotName+"."+link_name
+        createBinding(urdfWorld, robotLinkName, binding_phy_graph[robotLinkName], binding_phy_coll[robotLinkName]) #TODO: put bindings with real collision name.
+
+
+ 
 
 
     return urdfWorld
