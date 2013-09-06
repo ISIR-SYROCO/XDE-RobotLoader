@@ -53,11 +53,11 @@ def principalframe(M):
 
 def RollPitchYaw2Quaternion(roll, pitch, yaw):
     """ Give the Quaternion coresponding to the (roll,pitch,yaw) rotation
-    
+
     :param roll: a double which represents the roll angle
     :param pitch: a double which represents the pitch angle
     :param yaw: a double which represents the yaw angle
-    
+
     :rtype: return a lgsm.Quaternion representing this rotation
     """
     cph,sph = np.cos(roll/2.),  np.sin(roll/2.)
@@ -77,11 +77,11 @@ def RollPitchYaw2Quaternion(roll, pitch, yaw):
 
 def Quaternion2RollPitchYaw(Q):
     """ Give the (roll,pitch,yaw) rotation coresponding to the Quaternion
-    
+
     :param Q: the lgsm.Quaternion one wants to convert
-    
+
     :rtype: a 3-list corresponding to the [roll, pitch, yaw] rotation
-    
+
     :warning: it seems that some conversion problems occur when pitch = +|- pi/2
     """
     q0, q1, q2, q3 = Q
@@ -94,9 +94,9 @@ def Quaternion2RollPitchYaw(Q):
 
 def UrdfPose2Displacement(urdfPose):
     """ Convert a pose from urdf file into a displacement
-    
+
     :param urdfPose: a urdf.Pose
-    
+
     :rtype: a lgsm.Displacement
     """
     if urdfPose is not None:
@@ -110,9 +110,9 @@ def UrdfPose2Displacement(urdfPose):
 
 def Displacement2UrdfPose(H):
     """ Convert a displacement into a pose from urdf file
-    
+
     :param urdfPose: a lgsm.Displacement
-    
+
     :rtype: a urdf.Pose
     """
     return urdf.Pose([H.x, H.y, H.z], Quaternion2RollPitchYaw(H.getRotation()))
@@ -120,12 +120,12 @@ def Displacement2UrdfPose(H):
 
 def createBinding(world, phy_name, graph_name, comp_name):
     """ Create binding between physical, graphical & collision scenes.
-    
+
     :param world: a scene_pb2.World where the binding is set
     :param phy_name: the name of the physical node
     :param graph_name: the name of the graphical node
     :param comp_name: the name of the composite (collision) name
-    
+
     :warning: this method changes the name of the graph node into phy_name
     """
     graph_node      = desc.core.findInTree(world.scene.graphical_scene.root_node, graph_name)
@@ -138,7 +138,7 @@ def createBinding(world, phy_name, graph_name, comp_name):
 
 def createComposite(world, graph_name, composite_name, offset):
     """ Create a composite node copied from a graphical node
-    
+
     :param world: a scene_pb2.World where the graph node is, and where the composite will be created
     :param graph_name: the name of the graphical node
     :param composite_name: the name of the new composite node
@@ -184,10 +184,10 @@ def getParentNode(root_node, node_name):
 
 def createWorldFromDae(daeFileName, objectName, H_init=None, is_fixed_base = True, can_collide=True, collFileName=None, composite_offset=0.001, scale=1., mass=1., moments_of_inertia=None, H_inertia_segment=None, material_name="material.metal"):
     """ Create a world from a simple object described in a dae file.
-    
+
     It does not create a robot (a kinematic tree-structure) but a simple body through
     a physical node, a graphical node and a composite (collision) node.
-    
+
     :param daeFileName: the dae file path to convert
     :param objectName: the name of the physical node
     :param H_init: the initial pose (lgsm.Displacement) of the object in scene; by  default lgsm.Displacement(0,0,0)
@@ -199,7 +199,7 @@ def createWorldFromDae(daeFileName, objectName, H_init=None, is_fixed_base = Tru
     :param moments_of_inertia: the moments of inertia of the object
     :param H_inertia_segment: the lgsm.Displacement from the object frame to the inertial principal frame
     :param material_name: the material name, used in the definition of frictional interaction
-    
+
     :rtype: a scene_pb2.World with one physical/graphical/composite node
     """
 
@@ -224,13 +224,13 @@ def createWorldFromDae(daeFileName, objectName, H_init=None, is_fixed_base = Tru
         else:
             coll_object_world = object_world
         desc.simple.collision.addCompositeMesh(object_world, coll_object_world, composite_name=compositeName, offset=composite_offset, clean_meshes=True)
-        
+
         object_world.scene.collision_scene.meshes[0].root_node.ClearField("scale")
         if hasattr(scale, "__iter__") and len(scale) == 3:
             object_world.scene.collision_scene.meshes[0].root_node.scale.extend(scale)
         else:
             object_world.scene.collision_scene.meshes[0].root_node.scale.extend([scale]*3)
-        
+
 
     ##### FILL PHYSICAL TREE
     node = desc.simple.physic.addRigidBody(object_world, objectName)
@@ -258,20 +258,20 @@ def createWorldFromDae(daeFileName, objectName, H_init=None, is_fixed_base = Tru
 
 def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base = True, minimal_damping=0.001, composite_offset=0.001): #TODO: delete defined_mat
     """ Create a world from a kinematic tree-structure described in an urdf file.
-    
+
     It creates a kinematic tree-structure by parsing an urdf file, which describes
     the whole data about physic, kinematic, graphic and collision.
     For more information, see: `http://www.ros.org/wiki/urdf/XML/model`
-    
+
     :param urdfFileName: the urdf file path which describes the robot
     :param robotName: the robot name given in this world
     :param H_init: the initial pose (lgsm.Displacement) of the object in scene; by  default lgsm.Displacement(0,0,0)
     :param is_fixed_base: True if the robot is rigidly linked to the ground, False if it has a free-flying root
     :param minimal_damping: the minimal articular damping. Should NOT be null, because it seems to block the simulation
     :param composite_offset: the thickness dimension which covers the robto composite meshes
-    
+
     :rtype: a scene_pb2.World that contains the robot
-    
+
     In this created world, the robot is named 'robotName', and robot components are prefixed with 'robotName+.'
     For instance, if segments are 'seg01', 'seg02', ... in urdf file, and we create a robot 'johnny5'
     they can be found in the GVM scene with the names: 'johnny5.seg01', 'johnny5.seg02', etc...
@@ -437,7 +437,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
         H_init=lgsm.Displacementd(*H_init)
     desc.physic.fillKinematicTree(urdfWorld.scene.physical_scene.nodes.add(), tree=kin_tree, fixed_base=is_fixed_base, H_init=H_init, composites=binding_phy_coll)
 
-    
+
     urdf_bodies   = [str(robotName+"."+v) for v in  urdfRobot.links.keys()]
     urdf_segments = urdf_bodies
     desc.physic.addMechanism(urdfWorld.scene.physical_scene, robotName, robotName+"."+urdfRobot.get_root(), [], urdf_bodies, urdf_segments)
@@ -473,7 +473,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
             H_b_pf = H_b_c * H_c_pf
             desc.physic.fillRigidBody(node.rigid_body,  mass=m, moments_of_inertia=[Mpf[0,0], Mpf[1,1], Mpf[2,2]], H_inertia_segment=H_b_c, contact_material=link_material)
         else:
-            compNode = desc.core.findInList(urdfWorld.scene.collision_scene.meshes, node.rigid_body.name+".comp")
+            compNode = desc.core.findInList(urdfWorld.scene.physical_scene.collision_scene.meshes, node.rigid_body.name+".comp")
             if compNode is not None:
                 desc.physic.computeInertiaParameters(node.rigid_body, urdfWorld.library, compNode)
             else:
@@ -492,7 +492,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
         createBinding(urdfWorld, robotLinkName, binding_phy_graph[robotLinkName], binding_phy_coll[robotLinkName]) #TODO: put bindings with real collision name.
 
 
- 
+
 
 
     return urdfWorld
@@ -510,7 +510,7 @@ def get_simple_shapes_dae():
 
 def parse_urdf(urdfFileName, robotName, minimal_damping):
     """ Parse a urdf file to obtain usefull information for XDE.
-    
+
     :param urdfFileName: the urdf file path
     :param robotName: the robot name, mainly to rename urdf components with the convention 'robotName.compName'
     :param minimal_damping: if not given in urdf file, minimal damping. Should NOT be zero to avoid any blocking simulation
