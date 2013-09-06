@@ -10,7 +10,7 @@ import xde_robot_loader  as xrl
 import xde_resources     as xr
 
 import xdefw.interactive
-shell = xdefw.interactive.shell()
+shell = xdefw.interactive.shell_console()
 
 
 
