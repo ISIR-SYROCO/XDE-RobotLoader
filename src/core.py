@@ -471,7 +471,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
             H_b_c.setTranslation(lgsm.vectord(p))
             H_b_c.setRotation(R)
             H_b_pf = H_b_c * H_c_pf
-            desc.physic.fillRigidBody(node.rigid_body,  mass=m, moments_of_inertia=[Mpf[0,0], Mpf[1,1], Mpf[2,2]], H_inertia_segment=H_b_c, contact_material=link_material)
+            desc.physic.fillRigidBody(node.rigid_body, mass=m, moments_of_inertia=[Mpf[0,0], Mpf[1,1], Mpf[2,2]], H_inertia_segment=H_b_pf, contact_material=link_material)
         else:
             compNode = desc.core.findInList(urdfWorld.scene.physical_scene.collision_scene.meshes, node.rigid_body.name+".comp")
             if compNode is not None:
