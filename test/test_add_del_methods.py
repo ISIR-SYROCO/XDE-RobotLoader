@@ -9,8 +9,8 @@ import xde_world_manager as xwm
 import xde_robot_loader  as xrl
 import xde_resources     as xr
 
-import dsimi.interactive
-shell = dsimi.interactive.shell()
+import xdefw.interactive
+shell = xdefw.interactive.shell_console()
 
 
 
