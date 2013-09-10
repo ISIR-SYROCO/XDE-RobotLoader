@@ -84,11 +84,21 @@ def Quaternion2RollPitchYaw(Q):
 
     :warning: it seems that some conversion problems occur when pitch = +|- pi/2
     """
-    q0, q1, q2, q3 = Q
-    rpy = [ np.arctan2(2*(q0*q1 + q2*q3), 1 - 2*(q1**2 + q2**2)),
-            np.arcsin(2*(q0*q2 - q1*q3)),
-            np.arctan2(2*(q0*q3 + q1*q2), 1 - 2*(q2**2 + q3**2))]
-    return rpy
+    # new computation of Quaternion to roll,pitch,yaw: it is based on urdf_dom
+    w, x, y, z = Q
+    sqw, sqx, sqy, sqz = w**2, x**2, y**2, z**2
+    roll = np.arctan2( 2*( y*z + w*x ), sqw - sqx -sqy + sqz )
+    sarg = -2 ( x*z - w*y )
+    if (sarg <= -1.0):
+        pitch = -0.5*np.pi
+    else:
+        if (sarg >= 1.0):
+            pitch = 0.5*np.pi
+        else:
+            pitch = np.arcsin(sarg)
+    yaw = np.arctan2( 2*( x*y + w*z ), sqw + sqx - sqy -sqz)
+
+    return roll, pitch, yaw
 
 
 
@@ -131,9 +141,8 @@ def createBinding(world, phy_name, graph_name, comp_name):
     graph_node      = desc.core.findInTree(world.scene.graphical_scene.root_node, graph_name)
     phy_node        = desc.physic.findInPhysicalScene(world.scene.physical_scene, phy_name)
     graph_node.name = phy_name # it is suitable to have the same name for both graphics and physics.
-    print graph_node.name
-    #desc.scene.addBinding(world, phy_name, phy_name, "", comp_name)
-    desc.physic.fillRigidBody(phy_node.rigid_body, composite_name=comp_name)
+
+    phy_node.rigid_body.composite_name=comp_name
 
 
 def createComposite(world, graph_name, composite_name, offset):
