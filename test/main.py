@@ -59,7 +59,7 @@ dummy.enableContactWithBody("ground.ground", True)
 kuka.enableContactWithBody("ground.ground", True)
 rx90.enableContactWithBody("ground.ground", True)
 
-wm.addInteraction([("ground.ground", "kuka.04"), ("ground.ground", "kuka.05")])
+wm.contact.showContacts([("ground.ground", "kuka.04"), ("ground.ground", "kuka.05")])
 
 wm.startAgents()
 
