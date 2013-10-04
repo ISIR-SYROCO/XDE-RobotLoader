@@ -265,7 +265,7 @@ def createWorldFromDae(daeFileName, objectName, H_init=None, is_fixed_base = Tru
 
 
 
-def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base = True, minimal_damping=0.001, composite_offset=0.001): #TODO: delete defined_mat
+def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base = True, minimal_damping=0.001, composite_offset=0.001, use_collada_color=True): #TODO: delete defined_mat
     """ Create a world from a kinematic tree-structure described in an urdf file.
 
     It creates a kinematic tree-structure by parsing an urdf file, which describes
@@ -278,6 +278,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
     :param is_fixed_base: True if the robot is rigidly linked to the ground, False if it has a free-flying root
     :param minimal_damping: the minimal articular damping. Should NOT be null, because it seems to block the simulation
     :param composite_offset: the thickness dimension which covers the robto composite meshes
+    :param use_collada_color: If material/color node is empty in the urdf, override color defined in the collada file by default color if set to False, else use the color defined in the collada file
 
     :rtype: a scene_pb2.World that contains the robot
 
@@ -348,7 +349,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
                 mat.name = robotLinkName+"_material"
                 desc.material.fillColorMaterial(mat, [ float(x) for x in urdfMatNodes[robotLinkName] ])
                 desc.graphic.applyMaterialSet(tmp_world.scene.graphical_scene.root_node, material_set=[mat.name])
-            else:
+            elif use_collada_color == False:
                 desc.graphic.applyMaterialSet(tmp_world.scene.graphical_scene.root_node, material_set=["xde/YellowOpaqueAvatars", "xde/GreenOpaqueAvatars", "xde/RedOpaqueAvatars"]) #TODO: delete?
 
             if len(node_in_file) > 0:
