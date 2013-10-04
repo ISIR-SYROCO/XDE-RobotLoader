@@ -37,7 +37,6 @@ wm.addWorld(groundWorld)
 
 
 kukaWorld = xrl.createWorldFromUrdfFile(xr.kuka, "kuka", [0,0,-0.0, 0.707,0,  0.707, 0], True, 0.5, 0.01)
-wm.addMarkers(kukaWorld)
 wm.addWorld(kukaWorld)
 kuka = wm.phy.s.GVM.Robot("kuka")
 
@@ -45,12 +44,10 @@ kuka = wm.phy.s.GVM.Robot("kuka")
 rx90World = xrl.createWorldFromUrdfFile(xr.rx90, "rx90", [-0.5,0,0, 1, 0, 0, 0], True, 0.5, 0.01)
 wm.addWorld(rx90World)
 rx90 = wm.phy.s.GVM.Robot("rx90")
-wm.addMarkers(rx90World)
 
 dummyWorld = xrl.createWorldFromUrdfFile("resources/urdf/dummy2.xml", "dummy", [0,0,.5, 1, 0, 0, 0], True, 0.5, 0.01)
 wm.addWorld(dummyWorld,)
 dummy = wm.phy.s.GVM.Robot("dummy")
-wm.addMarkers(dummyWorld)
 
 
 wm.ms.setContactLawForMaterialPair("material.metal", "material.concrete", 1, 1.0)
