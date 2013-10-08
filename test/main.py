@@ -60,6 +60,12 @@ wm.contact.showContacts([("ground.ground", "kuka.04"), ("ground.ground", "kuka.0
 
 wm.startAgents()
 
+gdv = wm.createGlobalDistanceVisualizer()
+gdv.addCompositePair("kuka.00", "rx90.02")
+gdv.addCompositePair("kuka.00", "rx90.03")
+gdv.addCompositePair("kuka.00", "rx90.04")
+gdv.s.start()
+
 
 shell()
 
