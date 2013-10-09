@@ -192,7 +192,7 @@ def getParentNode(root_node, node_name):
 #                                                                          #
 ############################################################################
 
-def createWorldFromDae(daeFileName, objectName, H_init=None, is_fixed_base = True, can_collide=True, collFileName=None, composite_offset=0.001, scale=1., mass=1., moments_of_inertia=None, H_inertia_segment=None, material_name="material.metal"):
+def createWorldFromDae(daeFileName, objectName, H_init=None, is_fixed_base=True, can_collide=True, collFileName=None, composite_offset=0.001, scale=1., mass=1., moments_of_inertia=None, H_inertia_segment=None, material_name="material.metal"):
     """ Create a world from a simple object described in a dae file.
 
     It does not create a robot (a kinematic tree-structure) but a simple body through
@@ -235,11 +235,11 @@ def createWorldFromDae(daeFileName, objectName, H_init=None, is_fixed_base = Tru
             coll_object_world = object_world
         desc.simple.collision.addCompositeMesh(object_world, coll_object_world, composite_name=compositeName, offset=composite_offset, clean_meshes=True)
 
-        object_world.scene.collision_scene.meshes[0].root_node.ClearField("scale")
+        object_world.scene.physical_scene.collision_scene.meshes[0].root_node.ClearField("scale")
         if hasattr(scale, "__iter__") and len(scale) == 3:
-            object_world.scene.collision_scene.meshes[0].root_node.scale.extend(scale)
+            object_world.scene.physical_scene.collision_scene.meshes[0].root_node.scale.extend(scale)
         else:
-            object_world.scene.collision_scene.meshes[0].root_node.scale.extend([scale]*3)
+            object_world.scene.physical_scene.collision_scene.meshes[0].root_node.scale.extend([scale]*3)
 
 
     ##### FILL PHYSICAL TREE
@@ -266,7 +266,7 @@ def createWorldFromDae(daeFileName, objectName, H_init=None, is_fixed_base = Tru
 
 
 
-def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base = True, minimal_damping=0.001, composite_offset=0.001, use_collada_color=True): #TODO: delete defined_mat
+def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base = True, minimal_damping=0.001, composite_offset=0.001, use_collada_color=True):
     """ Create a world from a kinematic tree-structure described in an urdf file.
 
     It creates a kinematic tree-structure by parsing an urdf file, which describes
