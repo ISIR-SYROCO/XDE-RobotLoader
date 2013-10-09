@@ -9,7 +9,8 @@ import desc.simple.physic
 import desc.simple.graphic
 import desc.simple.collision
 
-
+import xde.desc.physic
+import physicshelper
 
 import lgsm
 import numpy as np
@@ -502,13 +503,24 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
         createBinding(urdfWorld, robotLinkName, binding_phy_graph[robotLinkName], binding_phy_coll[robotLinkName]) #TODO: put bindings with real collision name.
 
 
-
-
-
     return urdfWorld
 
 
 
+def getDynamicModelFromWorld(world, nnode=0, nmechanism=0):
+    """ Translate a robot described in a world into a dynamic model.
+    
+    :param world: a scene_pb2.World where to find the robot model
+    :param int nnode: the index of the node in world.scene.physical_scene.nodes from where to copy the kinematic tree
+    :param int nmechanism: the index of the mechanism in world.scene.physical_scene.mechanisms we want to copy
+    """
+    multiBodyModel = xde.desc.physic.physic_pb2.MultiBodyModel()
+    multiBodyModel.kinematic_tree.CopyFrom(world.scene.physical_scene.nodes[ nnode ])
+    multiBodyModel.meshes.extend(world.library.meshes)
+    multiBodyModel.mechanism.CopyFrom(world.scene.physical_scene.mechanisms[ nmechanism ])
+    multiBodyModel.composites.extend(world.scene.physical_scene.collision_scene.meshes)
+    dynModel = physicshelper.createDynamicModel(multiBodyModel)
+    return dynModel
 
 
 
