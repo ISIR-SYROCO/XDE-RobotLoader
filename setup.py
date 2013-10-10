@@ -74,6 +74,7 @@ setup(name='XDE-RobotLoader',
 	  author='Soseph',
 	  author_email='hak@isir.upmc.fr',
 	  package_dir={'xde_robot_loader':'src'},
+	  package_data={'xde_robot_loader': ['simple_shapes.dae']},
 	  packages=[package_name],
 	  cmdclass=cmdclass,
 
