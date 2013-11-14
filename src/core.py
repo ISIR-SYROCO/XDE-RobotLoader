@@ -489,7 +489,7 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
                 desc.physic.computeInertiaParameters(node.rigid_body, urdfWorld.library, compNode)
             else:
                 print "Warning: robot '"+robotName+"', no inertia set on urdf file for link", uname
-            #TODO: warn if no collision & no inertia are given in the urdf file
+
     root = desc.physic.findInPhysicalScene(urdfWorld.scene.physical_scene, robotName+"."+urdfRobot.get_root())
     desc.core.visitDepthFirst(setNodeMomentsOfInertia, root)
 
@@ -524,6 +524,39 @@ def getDynamicModelFromWorld(world, nnode=0, nmechanism=0):
 
 
 
+def getJointMapping(urdfFileName, robot, with_robot_prefix=True):
+    """ Get the mapping from the joint described in the urdf file to the robot Dofs.
+
+    :param str urdfFileName: the urdf file path
+    :param robot: the robot instance where to look for the Dofs
+    :type robot: :class:`xdefw.rtt.Robot` or :class:`physicshelper.DynamicModel`
+    """
+    uf = urdf.URDF.load_xml_file(urdfFileName)
+
+    if hasattr(robot, "getSegmentJointsOrder"): #it is a xdefw.rtt.Robot
+        rname           = str(robot)
+        robotParentDict = dict([(rname+"."+cname, parent) for cname, parent in uf.parent_map.items()])
+        segment_order   = zip(robot.getSegmentNames(), robot.getSegmentJointsOrder())
+        joint_order     = dict([(name, dof[0]) for name, dof in segment_order if dof[0]>=0])
+
+    else:
+        segmentNames           = [robot.getSegmentName(i) for i in range(robot.nbSegments())]
+        rname, unused, unused2 = os.path.commonprefix(segmentNames).partition(".")
+        robotParentDict        = dict([(rname+"."+cname, parent) for cname, parent in uf.parent_map.items() if uf.joints[parent[0]].joint_type != "fixed"])
+        segment_order          = [sname for sname in segmentNames if sname in robotParentDict]
+        joint_order            = dict([(cname, i) for i, cname in enumerate(segment_order)]) #we assume that there are only 1dof joints
+
+    jointMapping = {}
+    for cname, dof in joint_order.items():
+        jname = robotParentDict[cname][0]
+        if with_robot_prefix:
+            jname = rname+"."+jname
+        jointMapping[jname] = dof
+
+    return jointMapping
+
+
+
 def get_simple_shapes_dae():
     """ Get the dae file path of the simple shapes, box, sphere, cylinder """
     return os.path.dirname(__file__) + os.sep + "simple_shapes.dae"
@@ -533,9 +566,9 @@ def get_simple_shapes_dae():
 def parse_urdf(urdfFileName, robotName, minimal_damping):
     """ Parse a urdf file to obtain usefull information for XDE.
 
-    :param urdfFileName: the urdf file path
-    :param robotName: the robot name, mainly to rename urdf components with the convention 'robotName.compName'
-    :param minimal_damping: if not given in urdf file, minimal damping. Should NOT be zero to avoid any blocking simulation
+    :param str urdfFileName: the urdf file path
+    :param str robotName: the robot name, mainly to rename urdf components with the convention 'robotName.compName'
+    :param float minimal_damping: if not given in urdf file, minimal damping. Should NOT be zero to avoid any blocking simulation
     """
     robot = urdf.URDF.load_xml_file(urdfFileName)
 
@@ -630,9 +663,7 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
             phy_nodes[robotName+"."+c_name][3].append(  (jType, V_p_joint, A_p_joint, joint_damp, qmin, qmax, qinit)   )
             phy_nodes[robotName+"."+p_name][4].append(phy_nodes[robotName+"."+c_name])
         elif joint.joint_type == "fixed":
-            raise ValueError(" more test needed before using this type of joint")
             phy_nodes[robotName+"."+c_name][2] = UrdfPose2Displacement(joint.origin)
-            phy_nodes[robotName+"."+c_name][3].append( [] )
             phy_nodes[robotName+"."+p_name][4].append(phy_nodes[robotName+"."+c_name])
         elif joint.joint_type in ["continuous", "planar", "floating"]:
             raise ValueError("joint type '"+joint.joint_type+"' is in urdf convention, but it is not managed with this loader...")
