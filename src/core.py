@@ -641,6 +641,9 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
         assert(p_name in robot.links), p_name+" is not listed in the urdf links in "+urdfFileName
         assert(c_name in robot.links), c_name+" is not listed in the urdf links in "+urdfFileName
 
+        if joint.origin is None:
+            joint.origin = urdf.Pose((0,0,0), (0,0,0))
+
         V_p_joint  = joint.origin.position
         A_c_joint  = [float(v) for v in joint.axis.split()] #TODO:PB with parser, it returns a string and not a tuple
         qmin       = joint.limits.lower     if hasattr(joint.limits, "lower")     else -12.
