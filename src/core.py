@@ -530,6 +530,9 @@ def getJointMapping(urdfFileName, robot, with_robot_prefix=True):
     :param str urdfFileName: the urdf file path
     :param robot: the robot instance where to look for the Dofs
     :type robot: :class:`xdefw.rtt.Robot` or :class:`physicshelper.DynamicModel`
+    :param bool with_robot_prefix: whether the joint name are prefixed with the robot name or not
+
+    :rtype: a dictionnary {joint_name: joint_dof}
     """
     uf = urdf.URDF.load_xml_file(urdfFileName)
 
@@ -539,7 +542,7 @@ def getJointMapping(urdfFileName, robot, with_robot_prefix=True):
         segment_order   = zip(robot.getSegmentNames(), robot.getSegmentJointsOrder())
         joint_order     = dict([(name, dof[0]) for name, dof in segment_order if dof[0]>=0])
 
-    else:
+    else: # it should be a dynamic model (from xdecore or orc)
         segmentNames           = [robot.getSegmentName(i) for i in range(robot.nbSegments())]
         rname, unused, unused2 = os.path.commonprefix(segmentNames).partition(".")
         robotParentDict        = dict([(rname+"."+cname, parent) for cname, parent in uf.parent_map.items() if uf.joints[parent[0]].joint_type != "fixed"])
