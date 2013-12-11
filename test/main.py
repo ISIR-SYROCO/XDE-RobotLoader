@@ -36,7 +36,7 @@ groundWorld = xrl.createWorldFromUrdfFile(xr.ground, "ground", [0,0,-0.4, 1, 0, 
 wm.addWorld(groundWorld)
 
 
-kukaWorld = xrl.createWorldFromUrdfFile(xr.kuka, "kuka", [0,0,-0.0, 0.707,0,  0.707, 0], True, 0.5, 0.01)
+kukaWorld = xrl.createWorldFromUrdfFile(xr.kuka, "kuka", [0,0,-0.0, 0.707,0,  0.707, 0], True, 0.5, 0.01, use_collada_color=False)
 wm.addWorld(kukaWorld)
 kuka = wm.phy.s.GVM.Robot("kuka")
 
