@@ -464,31 +464,38 @@ def createWorldFromUrdfFile(urdfFileName, robotName, H_init=None, is_fixed_base 
         else:
             link_material = ""
 
-        if hasattr(link.inertial.origin, "position"):
-            p   = link.inertial.origin.position
-            R   = RollPitchYaw2Quaternion(*link.inertial.origin.rotation)
-            m   = link.inertial.mass
-            Iud = link.inertial.matrix
-            Inertia =np.array([[Iud['ixx'], Iud['ixy'], Iud['ixz']],
-                               [Iud['ixy'], Iud['iyy'], Iud['iyz']],
-                               [Iud['ixz'], Iud['iyz'], Iud['izz']]])
-            Mc = np.zeros((6,6))
-            Mc[0:3, 0:3] = Inertia
-            Mc[3:6, 3:6] = m*np.eye(3)
+        if link.inertial is not None:
+            if hasattr(link.inertial.origin, "position"):
+                p   = link.inertial.origin.position
+                R   = RollPitchYaw2Quaternion(*link.inertial.origin.rotation)
+                m   = link.inertial.mass if link.inertial.mass != 0.0 else 1.0
+                Iud = link.inertial.matrix
+                if Iud is not None:
+                    Inertia =np.array([[Iud['ixx'], Iud['ixy'], Iud['ixz']],
+                                       [Iud['ixy'], Iud['iyy'], Iud['iyz']],
+                                       [Iud['ixz'], Iud['iyz'], Iud['izz']]])
+                else:
+                    Inertia = np.zeros((6,6))
+                Mc = np.zeros((6,6))
+                Mc[0:3, 0:3] = Inertia
+                Mc[3:6, 3:6] = m*np.eye(3)
 
-            H_c_pf = principalframe(Mc)
-            Mpf    = H_c_pf.adjoint().transpose() * Mc * H_c_pf.adjoint()  #transport(Mc, H_c_pf)
-            H_b_c  = lgsm.Displacementd()
-            H_b_c.setTranslation(lgsm.vectord(p))
-            H_b_c.setRotation(R)
-            H_b_pf = H_b_c * H_c_pf
-            desc.physic.fillRigidBody(node.rigid_body, mass=m, moments_of_inertia=[Mpf[0,0], Mpf[1,1], Mpf[2,2]], H_inertia_segment=H_b_pf, contact_material=link_material)
-        else:
-            compNode = desc.core.findInList(urdfWorld.scene.physical_scene.collision_scene.meshes, node.rigid_body.name+".comp")
-            if compNode is not None:
-                desc.physic.computeInertiaParameters(node.rigid_body, urdfWorld.library, compNode)
+                H_c_pf = principalframe(Mc)
+                Mpf    = H_c_pf.adjoint().transpose() * Mc * H_c_pf.adjoint()  #transport(Mc, H_c_pf)
+                H_b_c  = lgsm.Displacementd()
+                H_b_c.setTranslation(lgsm.vectord(p))
+                H_b_c.setRotation(R)
+                H_b_pf = H_b_c * H_c_pf
+
+                desc.physic.fillRigidBody(node.rigid_body, mass=m, moments_of_inertia=[Mpf[0,0], Mpf[1,1], Mpf[2,2]], H_inertia_segment=H_b_pf, contact_material=link_material)
             else:
-                print "Warning: robot '"+robotName+"', no inertia set on urdf file for link", uname
+                compNode = desc.core.findInList(urdfWorld.scene.physical_scene.collision_scene.meshes, node.rigid_body.name+".comp")
+                if compNode is not None:
+                    desc.physic.computeInertiaParameters(node.rigid_body, urdfWorld.library, compNode)
+                else:
+                    print "Warning: robot '"+robotName+"', no inertia set on urdf file for link", uname
+        else:
+            desc.physic.fillRigidBody(node.rigid_body, mass=0, moments_of_inertia=[0,0,0])
 
     root = desc.physic.findInPhysicalScene(urdfWorld.scene.physical_scene, robotName+"."+urdfRobot.get_root())
     desc.core.visitDepthFirst(setNodeMomentsOfInertia, root)
@@ -619,7 +626,10 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
     #
     for l_name, link  in robot.links.items():
         robotLinkName =  robotName+"."+l_name
-        mass = link.inertial.mass
+        if link.inertial is not None:
+            mass = link.inertial.mass
+        else:
+            mass = 0.0
 
         phy_nodes[robotLinkName] = [robotLinkName, mass, lgsm.Displacementd(), [], []] # create a node for the XDE kinematic tree in dict phy_nodes
 
@@ -649,10 +659,10 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
 
         V_p_joint  = joint.origin.position
         A_c_joint  = [float(v) for v in joint.axis.split()] #TODO:PB with parser, it returns a string and not a tuple
-        qmin       = joint.limits.lower     if hasattr(joint.limits, "lower")     else -12.
-        qmax       = joint.limits.upper     if hasattr(joint.limits, "upper")     else  12.
-        tau_max    = joint.limits.effort    if hasattr(joint.limits, "effort")    else 10000.
-        joint_damp = joint.dynamics.damping if hasattr(joint.dynamics, "damping") else minimal_damping
+        qmin       = float(joint.limits.lower)     if hasattr(joint.limits, "lower")     else -12.
+        qmax       = float(joint.limits.upper)     if hasattr(joint.limits, "upper")     else  12.
+        tau_max    = float(joint.limits.effort)    if hasattr(joint.limits, "effort")    else 10000.
+        joint_damp = float(joint.dynamics.damping) if hasattr(joint.dynamics, "damping") else minimal_damping
         qinit      = 0 #TODO: no mean to give init value of q
 
         #Warning, urdf gives axis in child frame (in joint frame, which is the same).
@@ -671,7 +681,12 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
         elif joint.joint_type == "fixed":
             phy_nodes[robotName+"."+c_name][2] = UrdfPose2Displacement(joint.origin)
             phy_nodes[robotName+"."+p_name][4].append(phy_nodes[robotName+"."+c_name])
-        elif joint.joint_type in ["continuous", "planar", "floating"]:
+        elif joint.joint_type == "continuous":
+            jType = "hinge"
+            phy_nodes[robotName+"."+c_name][2] = UrdfPose2Displacement(joint.origin)
+            phy_nodes[robotName+"."+c_name][3].append(  (jType, V_p_joint, A_p_joint, joint_damp, -2*np.pi, 2*np.pi , qinit)   )
+            phy_nodes[robotName+"."+p_name][4].append(phy_nodes[robotName+"."+c_name])
+        elif joint.joint_type in ["planar", "floating"]:
             raise ValueError("joint type '"+joint.joint_type+"' is in urdf convention, but it is not managed with this loader...")
         else:
             raise ValueError("joint type '"+joint.joint_type+"' is NOT in urdf convention. Invalid URDF.")
