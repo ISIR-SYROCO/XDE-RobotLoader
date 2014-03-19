@@ -118,6 +118,18 @@ def UrdfPose2Displacement(urdfPose):
     else:
         return lgsm.Displacement()
 
+def Urdf2Graphviz(urdfFileName, outdir="/tmp", prefix=""):
+    uf = urdf.URDF.load_xml_file(urdfFileName)
+    outfilename = os.path.join(outdir, prefix+uf.name)+".dot"
+    outfile = open(outfilename, "w")
+
+    outfile.write("digraph "+uf.name+"{\n")
+    for j_name, joint in uf.joints.items():
+        outfile.write("\t"+joint.parent+" -> "+joint.child+" [label = "+joint.name+"__"+joint.joint_type+"];\n")
+    outfile.write("}")
+    outfile.close()
+
+
 
 def Displacement2UrdfPose(H):
     """ Convert a displacement into a pose from urdf file
