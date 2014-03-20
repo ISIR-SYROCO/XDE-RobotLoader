@@ -86,7 +86,7 @@ class JointGui(QtGui.QWidget):
 
             #slider.setTickPosition(QtGui.QSlider.TicksBothSides)
             slider.setSingleStep(1)
-            slider.setRange(-500, 500)
+            slider.setRange(self.robot.getJointPositionsMin()[joint_rank]*100, self.robot.getJointPositionsMax()[joint_rank]*100)
             self.sliders.append(slider)
 
             #Connect slider valueChanged signal to the signalMapper joint_signal_mapping
