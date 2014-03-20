@@ -14,14 +14,14 @@ class JointGui(QtGui.QWidget):
     def __init__(self, robot, robot_name, joint_map):
         super(JointGui, self).__init__()
         self.robot = robot
-        dof = self.robot.getJointSpaceDim()
-        self.joint_position = lgsm.zeros(dof)
+        self.dof = self.robot.getJointSpaceDim()
+        self.joint_position = lgsm.zeros(self.dof)
 
         if joint_map:
             self.joint_map = joint_map
         else:
         #joint_map is empty, use str(joint_rank) as dictionnary key
-            self.joint_map = {str(v):k for v, k in [[i,i] for i in range(dof)]}
+            self.joint_map = {str(v):k for v, k in [[i,i] for i in range(self.dof)]}
 
         #New group of widgets
         self.groupbox = QtGui.QGroupBox(robot_name, self)
@@ -52,6 +52,7 @@ class JointGui(QtGui.QWidget):
         groupboxlayout = QtGui.QVBoxLayout()
         groupboxlayout.addWidget(self.gravity_check)
         self.addSliders()
+        self.syncSliders()
 
         self.joint_signal_mapping.mapped.connect(self.setJoint)
         self.groupbox_sliders.setLayout(self.gridlayout)
@@ -68,7 +69,12 @@ class JointGui(QtGui.QWidget):
         #Value is int and is in [-500,500] so we divide by 100.0
         self.joint_position[id] = self.joint_signal_mapping.mapping(id).value()/100.0
         self.robot.setJointPositions(self.joint_position)
-        self.robot.setJointVelocities(lgsm.zeros(self.robot.getJointSpaceDim()))
+        self.robot.setJointVelocities(lgsm.zeros(self.dof))
+
+    def syncSliders(self):
+        joint_positions = self.robot.getJointPositions()
+        for i in range(self.dof):
+            self.joint_signal_mapping.mapping(i).setValue(int(joint_positions[i]*100))
 
     def addSliders(self):
         #Add sliders in a grid: Label|Slider
