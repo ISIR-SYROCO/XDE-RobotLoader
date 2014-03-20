@@ -36,7 +36,7 @@ groundWorld = xrl.createWorldFromUrdfFile(xr.ground, "ground", [0,0,-0.4, 1, 0, 
 wm.addWorld(groundWorld)
 
 
-kukaWorld = xrl.createWorldFromUrdfFile(xr.kuka, "kuka", [0,0,-0.0, 0.707,0,  0.707, 0], True, 0.5, 0.01, use_collada_color=False)
+kukaWorld = xrl.createWorldFromUrdfFile(xr.kuka, "kuka", [0,0,-0.0, 0.707,0,  0.707, 0], True, 0.5, 0.01, use_collada_color=True)
 wm.addWorld(kukaWorld)
 kuka = wm.phy.s.GVM.Robot("kuka")
 
@@ -56,16 +56,20 @@ dummy.enableContactWithBody("ground.ground", True)
 kuka.enableContactWithBody("ground.ground", True)
 rx90.enableContactWithBody("ground.ground", True)
 
-wm.contact.showContacts([("ground.ground", "kuka.04"), ("ground.ground", "kuka.05")])
+#wm.contact.showContacts([("ground.ground", "kuka.04"), ("ground.ground", "kuka.05")])
 
 wm.startAgents()
 
-gdv = wm.createGlobalDistanceVisualizer()
-gdv.addCompositePair("kuka.00", "rx90.02")
-gdv.addCompositePair("kuka.00", "rx90.03")
-gdv.addCompositePair("kuka.00", "rx90.04")
-gdv.s.start()
+#gdv = wm.createGlobalDistanceVisualizer()
+#gdv.addCompositePair("kuka.00", "rx90.02")
+#gdv.addCompositePair("kuka.00", "rx90.03")
+#gdv.addCompositePair("kuka.00", "rx90.04")
+#gdv.s.start()
 
+jmap = xrl.getJointMapping(xr.kuka, kuka)
+
+xrl.robotgui.configure()
+xrl.robotgui.createJointGui(kuka, joint_map=jmap)
 
 shell()
 
