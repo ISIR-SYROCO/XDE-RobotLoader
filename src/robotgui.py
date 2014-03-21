@@ -23,11 +23,8 @@ class JointGui(QtGui.QWidget):
         #joint_map is empty, use str(joint_rank) as dictionnary key
             self.joint_map = {str(v):k for v, k in [[i,i] for i in range(self.dof)]}
 
-        #New group of widgets
-        self.groupbox = QtGui.QGroupBox(robot_name, self)
-
         #Sliders group
-        self.groupbox_sliders = QtGui.QGroupBox("Joints")
+        self.groupbox_sliders = QtGui.QGroupBox("Joints Positions")
 
         #Sliders to joint map
         self.joint_signal_mapping = QtCore.QSignalMapper(self)
@@ -57,7 +54,7 @@ class JointGui(QtGui.QWidget):
         self.joint_signal_mapping.mapped.connect(self.setJoint)
         self.groupbox_sliders.setLayout(self.gridlayout)
         groupboxlayout.addWidget(self.groupbox_sliders)
-        self.groupbox.setLayout(groupboxlayout)
+        self.setLayout(groupboxlayout)
 
         self.setWindowTitle(robot_name)
         self.show()
