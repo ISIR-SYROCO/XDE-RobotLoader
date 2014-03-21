@@ -5,6 +5,17 @@ import lgsm
 
 window_list = []
 
+"""
+Gui Hierarchy:
+JointGui <ScrollArea>
+--joint_gui_widget <Widget>
+----groupboxlayout <VGroupBoxLayout>
+------gravity_check <CheckBox>
+------groupbox_sliders <GroupBox>
+--------gridlayout <GridLayout>
+----------Label_1 <Label> | Slider_1 <Slider>
+----------Label_n <Label> | Slider_n <Slider>
+"""
 class JointGui(QtGui.QScrollArea):
     """ Control Panel to set joint positions of a robot
     :param robot: The GVM robot
@@ -51,13 +62,13 @@ class JointGui(QtGui.QScrollArea):
         groupboxlayout.addWidget(self.gravity_check)
 
         self.addSliders()
-        self.syncSliders()
 
         self.joint_signal_mapping.mapped.connect(self.setJoint)
         groupboxlayout.addWidget(self.groupbox_sliders)
         self.joint_gui_widget.setLayout(groupboxlayout)
 
-        self.joint_gui_widget.setWindowTitle(robot_name)
+        self.setWindowTitle(robot_name)
+        self.syncSliders()
 
     #Set joint position callback
     def setJoint(self, id):
