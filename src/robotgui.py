@@ -5,7 +5,7 @@ import lgsm
 
 window_list = []
 
-class JointGui(QtGui.QWidget):
+class JointGui(QtGui.QScrollArea):
     """ Control Panel to set joint positions of a robot
     :param robot: The GVM robot
     :param robot_name: Name of the robot (str)
@@ -16,6 +16,7 @@ class JointGui(QtGui.QWidget):
         self.robot = robot
         self.dof = self.robot.getJointSpaceDim()
         self.joint_position = lgsm.zeros(self.dof)
+        self.joint_gui_widget = QtGui.QWidget()
 
         if joint_map:
             self.joint_map = joint_map
@@ -23,19 +24,19 @@ class JointGui(QtGui.QWidget):
         #joint_map is empty, use str(joint_rank) as dictionnary key
             self.joint_map = {str(v):k for v, k in [[i,i] for i in range(self.dof)]}
 
-        #Sliders group
-        self.groupbox_sliders = QtGui.QGroupBox("Joints Positions")
-
         #Sliders to joint map
         self.joint_signal_mapping = QtCore.QSignalMapper(self)
 
         self.sliders = []
 
         self.initGui(robot_name)
+        self.setWidget(self.joint_gui_widget)
+        self.setGeometry(300, 300, 450, 500)
+        self.show()
 
     def initGui(self, robot_name):
         #Size of the window x,y, w,h
-        self.setGeometry(300, 300, 500, 500)
+        self.joint_gui_widget.setGeometry(300, 300, 400, self.dof*40)
 
         #Checkbox to enable gravity
         self.gravity_check = QtGui.QCheckBox("Enable Gravity")
@@ -48,16 +49,15 @@ class JointGui(QtGui.QWidget):
         #Stacking checkbox and sliders group
         groupboxlayout = QtGui.QVBoxLayout()
         groupboxlayout.addWidget(self.gravity_check)
+
         self.addSliders()
         self.syncSliders()
 
         self.joint_signal_mapping.mapped.connect(self.setJoint)
-        self.groupbox_sliders.setLayout(self.gridlayout)
         groupboxlayout.addWidget(self.groupbox_sliders)
-        self.setLayout(groupboxlayout)
+        self.joint_gui_widget.setLayout(groupboxlayout)
 
-        self.setWindowTitle(robot_name)
-        self.show()
+        self.joint_gui_widget.setWindowTitle(robot_name)
 
     #Set joint position callback
     def setJoint(self, id):
@@ -74,6 +74,9 @@ class JointGui(QtGui.QWidget):
             self.joint_signal_mapping.mapping(i).setValue(int(joint_positions[i]*100))
 
     def addSliders(self):
+        #Sliders group
+        self.groupbox_sliders = QtGui.QGroupBox("Joints Positions")
+
         #Add sliders in a grid: Label|Slider
         self.gridlayout = QtGui.QGridLayout()
         current_line = 0
@@ -97,6 +100,7 @@ class JointGui(QtGui.QWidget):
             self.gridlayout.addWidget(label, current_line, 0)
             self.gridlayout.addWidget(slider, current_line, 1)
             current_line = current_line +1
+        self.groupbox_sliders.setLayout(self.gridlayout)
 
     #Enable gravity callback
     def enable_gravity(self, state):
