@@ -37,6 +37,7 @@ class JointGui(QtGui.QScrollArea):
 
         #Sliders to joint map
         self.joint_signal_mapping = QtCore.QSignalMapper(self)
+        self.label_signal_mapping = QtCore.QSignalMapper(self)
 
         self.sliders = []
 
@@ -79,10 +80,18 @@ class JointGui(QtGui.QScrollArea):
         self.robot.setJointPositions(self.joint_position)
         self.robot.setJointVelocities(lgsm.zeros(self.dof))
 
+        joint_name = ""
+        for jname, jrank in self.joint_map.items():
+            if jrank == id:
+                joint_name = jname
+
+        self.label_signal_mapping.mapping(id).setText("[%.2f]" % self.joint_position[id])
+
     def syncSliders(self):
         joint_positions = self.robot.getJointPositions()
         for i in range(self.dof):
             self.joint_signal_mapping.mapping(i).setValue(int(joint_positions[i]*100))
+            self.label_signal_mapping.mapping(i).setText("[%.2f]" % joint_positions[i])
 
     def addSliders(self):
         #Sliders group
@@ -92,7 +101,8 @@ class JointGui(QtGui.QScrollArea):
         self.gridlayout = QtGui.QGridLayout()
         current_line = 0
         for joint_name, joint_rank in self.joint_map.items():
-            label = QtGui.QLabel(joint_name+": ")
+            label = QtGui.QLabel(joint_name)
+            label_value = QtGui.QLabel()
             slider = QtGui.QSlider(QtCore.Qt.Horizontal)
 
             #slider.setTickPosition(QtGui.QSlider.TicksBothSides)
@@ -106,10 +116,12 @@ class JointGui(QtGui.QScrollArea):
             #Setting the mapping slider:id where id is the joint_rank
             #The slider can be accessed via joint_signal_mapping.mapping(id)
             self.joint_signal_mapping.setMapping(slider, joint_rank)
+            self.label_signal_mapping.setMapping(label_value, joint_rank)
 
             #Add the label and the slider to the grid
             self.gridlayout.addWidget(label, current_line, 0)
-            self.gridlayout.addWidget(slider, current_line, 1)
+            self.gridlayout.addWidget(label_value, current_line, 1)
+            self.gridlayout.addWidget(slider, current_line, 2)
             current_line = current_line +1
         self.groupbox_sliders.setLayout(self.gridlayout)
 
