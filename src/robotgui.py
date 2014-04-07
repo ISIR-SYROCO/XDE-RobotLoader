@@ -76,6 +76,7 @@ class JointGui(QtGui.QScrollArea):
         #id is the identificator of the slider/joint
         #joint_signal_mapping.mapping(id) is the slider,
         #Value is int and is in [-500,500] so we divide by 100.0
+        self.joint_position = self.robot.getJointPositions()
         self.joint_position[id] = self.joint_signal_mapping.mapping(id).value()/100.0
         self.robot.setJointPositions(self.joint_position)
         self.robot.setJointVelocities(lgsm.zeros(self.dof))
