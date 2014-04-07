@@ -90,7 +90,7 @@ def Quaternion2RollPitchYaw(Q):
     w, x, y, z = Q
     sqw, sqx, sqy, sqz = w**2, x**2, y**2, z**2
     roll = np.arctan2( 2*( y*z + w*x ), sqw - sqx -sqy + sqz )
-    sarg = -2 ( x*z - w*y )
+    sarg = -2 * ( x*z - w*y )
     if (sarg <= -1.0):
         pitch = -0.5*np.pi
     else:
