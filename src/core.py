@@ -675,7 +675,7 @@ def parse_urdf(urdfFileName, robotName, minimal_damping):
         qmin       = float(joint.limits.lower)     if hasattr(joint.limits, "lower")     else -12.
         qmax       = float(joint.limits.upper)     if hasattr(joint.limits, "upper")     else  12.
         tau_max    = float(joint.limits.effort)    if hasattr(joint.limits, "effort")    else 10000.
-        joint_damp = float(joint.dynamics.damping) if hasattr(joint.dynamics, "damping") else minimal_damping
+        joint_damp = max(float(joint.dynamics.damping), minimal_damping) if hasattr(joint.dynamics, "damping") else minimal_damping
         qinit      = 0 #TODO: no mean to give init value of q
 
         #Warning, urdf gives axis in child frame (in joint frame, which is the same).
